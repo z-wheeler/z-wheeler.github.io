@@ -71,49 +71,49 @@
 
 		<ul id="myImagesEnglish" style="display: none;">
 			<li>
-				<img src="/uploads/map-1-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-1-eng.png" class="card-img-top" alt="Map1">
 			</li>
 			<li>
-				<img src="/uploads/map-2-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-2-eng.png" class="card-img-top" alt="Map2">
 			</li>
 			<li>
-				<img src="/uploads/map-3-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-3-eng.png" class="card-img-top" alt="Map3">
 			</li>
 			<li>
-				<img src="/uploads/map-4-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-4-eng.png" class="card-img-top" alt="Map4">
 			</li>
 			<li>
-				<img src="/uploads/map-5-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-5-eng.png" class="card-img-top" alt="Map5">
 			</li>
 			<li>
-				<img src="/uploads/map-6-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-6-eng.png" class="card-img-top" alt="Map6">
 			</li>
 			<li>
-				<img src="/uploads/map-7-eng.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-7-eng.png" class="card-img-top" alt="Map7">
 			</li>
 		</ul>
 
 		<ul id="myImagesPortuguese" style="display: none;">
 			<li>
-				<img src="/uploads/map-1-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-1-por.png" class="card-img-top" alt="Mapa1">
 			</li>
 			<li>
-				<img src="/uploads/map-2-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-2-por.png" class="card-img-top" alt="Mapa2">
 			</li>
 			<li>
-				<img src="/uploads/map-3-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-3-por.png" class="card-img-top" alt="Mapa3">
 			</li>
 			<li>
-				<img src="/uploads/map-4-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-4-por.png" class="card-img-top" alt="Mapa4">
 			</li>
 			<li>
-				<img src="/uploads/map-5-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-5-por.png" class="card-img-top" alt="Mapa5">
 			</li>
 			<li>
-				<img src="/uploads/map-6-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-6-por.png" class="card-img-top" alt="Mapa6">
 			</li>
 			<li>
-				<img src="/uploads/map-7-por.png" class="card-img-top" alt="Map">
+				<img src="/uploads/map-7-por.png" class="card-img-top" alt="Mapa7">
 			</li>
 		</ul>
 
@@ -195,19 +195,27 @@
 				function showPrevEng() {
 					currentIndexEng = (currentIndexEng > 0) ? currentIndexEng - 1 : imagesEng.length - 1;
 					setCurrentImageEng(currentIndexEng);
+					currentIndexPor = (currentIndexPor > 0) ? currentIndexPor - 1 : imagesPor.length - 1;
+					setCurrentImagePor(currentIndexPor);
 				}
 
 				function showNextEng() {
 					currentIndexEng = (currentIndexEng < imagesEng.length - 1) ? currentIndexEng + 1 : 0;
 					setCurrentImageEng(currentIndexEng);
+					currentIndexPor = (currentIndexPor < imagesPor.length - 1) ? currentIndexPor + 1 : 0;
+					setCurrentImagePor(currentIndexPor);
 				}
 
 				function showPrevPor() {
+					currentIndexEng = (currentIndexEng > 0) ? currentIndexEng - 1 : imagesEng.length - 1;
+					setCurrentImageEng(currentIndexEng);
 					currentIndexPor = (currentIndexPor > 0) ? currentIndexPor - 1 : imagesPor.length - 1;
 					setCurrentImagePor(currentIndexPor);
 				}
 
 				function showNextPor() {
+					currentIndexEng = (currentIndexEng < imagesEng.length - 1) ? currentIndexEng + 1 : 0;
+					setCurrentImageEng(currentIndexEng);
 					currentIndexPor = (currentIndexPor < imagesPor.length - 1) ? currentIndexPor + 1 : 0;
 					setCurrentImagePor(currentIndexPor);
 				}
