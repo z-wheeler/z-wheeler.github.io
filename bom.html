@@ -1,78 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>Zachary Wheeler</title>
-		<meta name="description" content="Zachary Wheeler's online sandbox—an outlet to satiate his inner desire to dabble in computer science.">
-		<meta charset="utf-8">
-		
-		<!-- "Mobile-first" viewport: see https://www.w3schools.com/bootstrap/bootstrap_get_started.asp for more info -->
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
-		
-		<!-- Hosted stylesheet on GitHub -->
-		<link rel="stylesheet" type="text/css" href="/assets/css/main.css">
-		
-	</head>
-	<body>
-		<div class="row bg-secondary p-4 p-sm-5">
-			<div class="col-12 col-sm-3 col-md-2 d-flex justify-content-center justify-content-sm-start">
-				<header>
-					<a href="/index.html" class="text-decoration-none text-white h1">ZW</a>
-				</header>
+
+<head>
+	<title>Zachary Wheeler</title>
+	<meta name="description"
+		content="Zachary Wheeler's online sandbox—an outlet to satiate his inner desire to dabble in computer science.">
+	<meta charset="utf-8">
+
+	<!-- "Mobile-first" viewport: see https://www.w3schools.com/bootstrap/bootstrap_get_started.asp for more info -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+
+	<!-- Hosted stylesheet on GitHub -->
+	<link rel="stylesheet" type="text/css" href="/assets/css/main.css">
+
+</head>
+
+<body>
+	<div class="row bg-secondary p-4 p-sm-5">
+		<div class="col-12 col-sm-3 col-md-2 d-flex justify-content-center justify-content-sm-start">
+			<header>
+				<a href="/index.html" class="text-decoration-none text-white h1">ZW</a>
+			</header>
+		</div>
+		<div
+			class="col-12 col-sm-9 col-md-10 d-flex justify-content-center justify-content-sm-start pt-2 mt-1 text-white">
+			<nav>
+				<a class="text-white" href="https://github.com/z-wheeler">GitHub</a> |
+				<a class="text-white" href="https://video.ibm.com/channel/iss-hdev-payload/pop-out">ISS</a> |
+				<a class="text-white" href="https://youglish.com/">YouGlish</a> |
+				<a class="text-white" href="/bom.html">Book of Mormon</a>
+			</nav>
+		</div>
+	</div>
+	<div class="p-4">
+		<h1>Book of Mormom – Livro de Mórmon</h1>
+		<p class="lead"></p>
+		<div class="row py-2">
+			<div class="col-6">
+				<button id="eng-btn" type="button" class="btn btn-secondary btn-block">English</button>
 			</div>
-			<div class="col-12 col-sm-9 col-md-10 d-flex justify-content-center justify-content-sm-start pt-2 mt-1 text-white">
-				<nav>
-					<a class="text-white" href="https://github.com/z-wheeler">GitHub</a> |
-					<a class="text-white" href="https://video.ibm.com/channel/iss-hdev-payload/pop-out">ISS</a> |
-					<a class="text-white" href="https://youglish.com/">YouGlish</a> |
-					<a class="text-white" href="/bom.html">Book of Mormon</a>
-				</nav>
+			<div class="col-6">
+				<button id="por-btn" type="button" class="btn btn-secondary btn-block">Português</button>
 			</div>
 		</div>
-		<div class="p-4">
-			<h1>Book of Mormom – Livro de Mórmon</h1>
-			<p class="lead"></p>
-			<div class="row py-2">
-				<div class="col-6">
-					<button id="eng-btn" type="button" class="btn btn-dark btn-block">English</button>
-				</div>
-				<div class="col-6">	
-					<button id="por-btn" type="button" class="btn btn-dark btn-block">Português</button>
+
+		<div id="map-content-eng" style="display: none;">
+			<div class="card">
+				<div id="card-image-eng-div"></div>
+				<div class="card-body">
+					<!-- <h5 class="card-title">2500 – 2200 B.C.</h5> -->
+					<button id="previous-btn-eng" type="button" class="btn btn-secondary">Previous</button>
+					<button id="next-btn-eng" type="button" class="btn btn-secondary">Next</button>
 				</div>
 			</div>
-			<div id="map-content">
+		</div>
+
+		<div id="map-content-por" style="display: none;">
+			<div class="card">
+				<div id="card-image-por-div"></div>
+				<div class="card-body">
+					<!-- <h5 class="card-title">2500 – 2200 B.C.</h5> -->
+					<button id="previous-btn-por" type="button" class="btn btn-secondary">Anterior</button>
+					<button id="next-btn-por" type="button" class="btn btn-secondary">Próximo</button>
+				</div>
 			</div>
-			<script>
-				// select the button and the div
-				const englishButton = document.getElementById('eng-btn');
-				const portugueseButton = document.getElementById('por-btn');
-				const mapContentDiv = document.getElementById('map-content');
-			  
-				// define the function to display English content
-				function displayEnglishContent() {
-					mapContentDiv.innerHTML = '\
-					<div class="card" style="width: 18rem;">\
- 						<img src="/uploads/map-1-eng.png" class="card-img-top" alt="...">\
-  						<div class="card-body">\
-    						<h5 class="card-title">Card title</h5>\
-    						<p class="card-text">Some quick example text to build on the card title and make up the bulk of the card\'s content.</p>\
-   							<a href="#" class="btn btn-primary">Go somewhere</a>\
-						</div>\
-					</div>\
-					';
+		</div>
+
+		<ul id="myImagesEnglish" style="display: none;">
+			<li>
+				<img src="/uploads/map-1-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-2-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-3-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-4-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-5-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-6-eng.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-7-eng.png" class="card-img-top" alt="Map">
+			</li>
+		</ul>
+
+		<ul id="myImagesPortuguese" style="display: none;">
+			<li>
+				<img src="/uploads/map-1-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-2-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-3-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-4-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-5-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-6-por.png" class="card-img-top" alt="Map">
+			</li>
+			<li>
+				<img src="/uploads/map-7-por.png" class="card-img-top" alt="Map">
+			</li>
+		</ul>
+
+		<script>
+			// select the button and the div
+			const englishButton = document.getElementById('eng-btn');
+			const portugueseButton = document.getElementById('por-btn');
+			const mapContentEngDiv = document.getElementById('map-content-eng');
+			const mapContentPorDiv = document.getElementById('map-content-por');
+
+			// define the function to display English content
+			function displayEnglishContent() {
+				mapContentEngDiv.style.display = 'block';
+				mapContentPorDiv.style.display = 'none';
+			}
+
+			// define the function to display Portuguese content
+			function displayPortugueseContent() {
+				mapContentPorDiv.style.display = 'block';
+				mapContentEngDiv.style.display = 'none';
+			}
+
+			// add event listener to the button
+			englishButton.addEventListener('click', displayEnglishContent);
+			portugueseButton.addEventListener('click', displayPortugueseContent);
+
+
+			(function () {
+				//we'll hold a reference to our original ul image listing
+				var listingSelectorEng = document.getElementById('myImagesEnglish');
+				var listingSelectorPor = document.getElementById('myImagesPortuguese');
+
+				//and we get all img elements that the listing contains
+				var imagesEng = document.querySelectorAll('#myImagesEnglish img');
+				var imagesPor = document.querySelectorAll('#myImagesPortuguese img');
+
+				//creating buttons and registering events
+				const prevEng = document.getElementById('previous-btn-eng');
+				const nextEng = document.getElementById('next-btn-eng');
+				const prevPor = document.getElementById('previous-btn-por');
+				const nextPor = document.getElementById('next-btn-por');
+
+				prevEng.addEventListener('click', showPrevEng);
+				nextEng.addEventListener('click', showNextEng);
+				prevPor.addEventListener('click', showPrevPor);
+				nextPor.addEventListener('click', showNextPor);
+
+				//we need a div to store the current visible image
+				var currentImageDivEng = document.getElementById('card-image-eng-div');
+				var currentImageDivPor = document.getElementById('card-image-por-div');
+
+				//we'll need to keep track of the current image index
+				var currentIndexEng = 0;
+				var currentIndexPor = 0;
+
+				//these functions will update the current image to display
+				function setCurrentImageEng(index) {
+					currentIndexEng = index;
+					currentImageDivEng.innerHTML = ''; // Clear current image div
+					currentImageDivEng.appendChild(imagesEng[currentIndexEng].cloneNode(true));
 				}
 
-				// define the function to display Portuguese content
-				function displayPortugueseContent() {
-					mapContentDiv.innerHTML = '<p>Por!</p>';
+				function setCurrentImagePor(index) {
+					currentIndexPor = index;
+					currentImageDivPor.innerHTML = ''; // Clear current image div
+					currentImageDivPor.appendChild(imagesPor[currentIndexPor].cloneNode(true));
 				}
-			  
-				// add event listener to the button
-				englishButton.addEventListener('click', displayEnglishContent);
-				portugueseButton.addEventListener('click', displayPortugueseContent);
-			</script>
-		</div>
-	</body>
+
+				//display the first image
+				setCurrentImageEng(0);
+				setCurrentImagePor(0);
+
+				//these two will work as references to the image being displayed
+				var currentImgElmEng = imagesEng[currentIndexEng];
+				var currentImgElmPor = imagesPor[currentIndexPor];
+
+				//showPrev and showNext will set the current image
+				//according to the appropiate index pointer
+				function showPrevEng() {
+					currentIndexEng = (currentIndexEng > 0) ? currentIndexEng - 1 : imagesEng.length - 1;
+					setCurrentImageEng(currentIndexEng);
+				}
+
+				function showNextEng() {
+					currentIndexEng = (currentIndexEng < imagesEng.length - 1) ? currentIndexEng + 1 : 0;
+					setCurrentImageEng(currentIndexEng);
+				}
+
+				function showPrevPor() {
+					currentIndexPor = (currentIndexPor > 0) ? currentIndexPor - 1 : imagesPor.length - 1;
+					setCurrentImagePor(currentIndexPor);
+				}
+
+				function showNextPor() {
+					currentIndexPor = (currentIndexPor < imagesPor.length - 1) ? currentIndexPor + 1 : 0;
+					setCurrentImagePor(currentIndexPor);
+				}
+			})();
+
+
+
+		</script>
+	</div>
+</body>
+
 </html>
