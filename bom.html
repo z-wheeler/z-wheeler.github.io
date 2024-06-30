@@ -32,29 +32,47 @@
 			</div>
 		</div>
 		<div class="p-4">
-			<h1>Olá!</h1>
-			<p class="lead">Meu nome é Zach e estou interessado em engenharia mecânica e programação.</p>
-			<h2>Interests</h2>
+			<h1>Book of Mormom – Livro de Mórmon</h1>
+			<p class="lead"></p>
 			<div class="row py-2">
-				<div class="col-md-6">
-					
-					<!-- 16:9 aspect ratio -->
-					<div class="embed-responsive embed-responsive-16by9">
-						<iframe class="embed-responsive-item" src="https://video.ibm.com/embed/17074538" scrolling="no" allowfullscreen webkitallowfullscreen frameborder="0" style="border: 0 none transparent;"></iframe>
-					</div>
+				<div class="col-6">
+					<button id="eng-btn" type="button" class="btn btn-dark btn-block">English</button>
 				</div>
-				<div class="col-md-6">
-						
-					<!-- 16:9 aspect ratio -->
-					<div class="embed-responsive embed-responsive-16by9">
-						<iframe class="embed-responsive-item" src="https://ustream.tv/embed/9408562" scrolling="no" allowfullscreen webkitallowfullscreen frameborder="0" style="border: 0 none transparent;"></iframe>
-					</div>
+				<div class="col-6">	
+					<button id="por-btn" type="button" class="btn btn-dark btn-block">Português</button>
 				</div>
 			</div>
-			
-			<ul style="list-style-type: lower-greek;">
-				<li><a href="https://apple.stackexchange.com/questions/305172/cant-delete-bootcamp-partition">Boot Camp Hail Mary</a></li>
-			</ul>
+			<div id="map-content">
+			</div>
+			<script>
+				// select the button and the div
+				const englishButton = document.getElementById('eng-btn');
+				const portugueseButton = document.getElementById('por-btn');
+				const mapContentDiv = document.getElementById('map-content');
+			  
+				// define the function to display English content
+				function displayEnglishContent() {
+					mapContentDiv.innerHTML = '\
+					<div class="card" style="width: 18rem;">\
+ 						<img src="/uploads/map-1-eng.png" class="card-img-top" alt="...">\
+  						<div class="card-body">\
+    						<h5 class="card-title">Card title</h5>\
+    						<p class="card-text">Some quick example text to build on the card title and make up the bulk of the card\'s content.</p>\
+   							<a href="#" class="btn btn-primary">Go somewhere</a>\
+						</div>\
+					</div>\
+					';
+				}
+
+				// define the function to display Portuguese content
+				function displayPortugueseContent() {
+					mapContentDiv.innerHTML = '<p>Por!</p>';
+				}
+			  
+				// add event listener to the button
+				englishButton.addEventListener('click', displayEnglishContent);
+				portugueseButton.addEventListener('click', displayPortugueseContent);
+			</script>
 		</div>
 	</body>
 </html>
