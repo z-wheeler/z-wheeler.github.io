@@ -11,13 +11,13 @@
                maximum-scale=1.0,
                user-scalable=no">
 
-<title>iPhone Pocket Interval Alarm</title>
+<title>iPhone Interval Alarm Diagnostic</title>
 
 <style>
 
     body {
         margin: 0;
-        padding: 30px 20px;
+        padding: 25px 15px;
         background: #111;
         color: white;
         font-family:
@@ -25,45 +25,37 @@
             BlinkMacSystemFont,
             "Helvetica Neue",
             sans-serif;
-        text-align: center;
     }
 
     h1 {
-        font-size: 28px;
-        margin-bottom: 30px;
+        text-align: center;
+        font-size: 27px;
     }
 
-    .input-container {
-        margin-bottom: 20px;
+    .controls {
+        text-align: center;
     }
 
     label {
         display: block;
         font-size: 18px;
+        margin-top: 20px;
         margin-bottom: 8px;
     }
 
     input {
-        width: 130px;
-        padding: 12px;
-        font-size: 26px;
+        width: 120px;
+        padding: 10px;
+        font-size: 25px;
         text-align: center;
-
-        border: none;
         border-radius: 10px;
-    }
-
-    .unit {
-        font-size: 18px;
+        border: none;
     }
 
     button {
         font-size: 20px;
-        font-weight: 600;
-
-        padding: 15px 28px;
-        margin: 8px;
-
+        padding: 14px 25px;
+        margin: 10px 5px;
         border: none;
         border-radius: 12px;
     }
@@ -79,24 +71,48 @@
     }
 
     #countdown {
-        margin-top: 35px;
-
-        font-size: 52px;
+        text-align: center;
+        font-size: 50px;
         font-weight: bold;
+        margin: 25px 0 10px;
         font-variant-numeric: tabular-nums;
     }
 
     #status {
-        margin-top: 20px;
-
-        font-size: 17px;
-        line-height: 1.5;
-
+        text-align: center;
         white-space: pre-line;
+        font-size: 17px;
+        margin-bottom: 20px;
     }
 
-    #audio {
-        display: none;
+    #diagnostics {
+        background: #222;
+        border-radius: 12px;
+        padding: 15px;
+        font-family: monospace;
+        font-size: 14px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    #log {
+        margin-top: 15px;
+        background: #181818;
+        border-radius: 12px;
+        padding: 12px;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .section {
+        margin-top: 20px;
+        font-weight: bold;
+        color: #aaa;
     }
 
 </style>
@@ -107,10 +123,10 @@
 <body>
 
 
-<h1>⏱ Pocket Interval Alarm</h1>
+<h1>⏱ Interval Alarm Diagnostic</h1>
 
 
-<div class="input-container">
+<div class="controls">
 
     <label for="interval">
         Alarm interval
@@ -122,24 +138,22 @@
         min="1"
         max="300"
         step="1"
-        value="30"
+        value="5"
     >
 
-    <span class="unit">
-        seconds
-    </span>
+    <span>seconds</span>
+
+    <br>
+
+    <button id="startButton">
+        START
+    </button>
+
+    <button id="stopButton">
+        STOP
+    </button>
 
 </div>
-
-
-<button id="startButton">
-    START
-</button>
-
-
-<button id="stopButton">
-    STOP
-</button>
 
 
 <div id="countdown">
@@ -152,20 +166,25 @@
 </div>
 
 
-<!--
+<div class="section">
+    AUDIO DIAGNOSTICS
+</div>
 
-    IMPORTANT:
 
-    This is the native Safari audio element.
+<div id="diagnostics">
+Waiting for test...
+</div>
 
-    Once START is pressed, this element receives a WAV
-    containing the repeating alarm pattern.
 
-    Safari therefore sees this as ordinary media playback
-    rather than a JavaScript timer trying to generate
-    individual sounds in the background.
+<div class="section">
+    EVENT LOG
+</div>
 
--->
+
+<div id="log">
+No events yet.
+</div>
+
 
 <audio
     id="audio"
@@ -186,28 +205,16 @@ CONFIGURATION
 
 const SAMPLE_RATE = 44100;
 
-
-/*
-    Length of the actual alarm.
-
-    ~180 ms is short enough to be a "chirp",
-    but long enough to be clearly noticeable.
-*/
-
 const ALARM_DURATION = 0.18;
 
-
-/*
-    Prevent accidentally creating enormous WAV files.
-*/
-
 const MIN_INTERVAL = 1;
+
 const MAX_INTERVAL = 300;
 
 
 /*
 ============================================================
-ELEMENTS
+DOM
 ============================================================
 */
 
@@ -230,6 +237,12 @@ const countdown =
 const status =
     document.getElementById("status");
 
+const diagnostics =
+    document.getElementById("diagnostics");
+
+const logElement =
+    document.getElementById("log");
+
 
 /*
 ============================================================
@@ -240,23 +253,102 @@ STATE
 
 let running = false;
 
+let requestedInterval = 0;
+
+let cycleNumber = 0;
+
 let countdownTimer = null;
 
-let startTime = 0;
 
-let intervalSeconds = 0;
+/*
+    High-resolution JavaScript timestamps.
+*/
+
+let testStartPerformance = 0;
+
+let lastCyclePerformance = null;
+
+
+/*
+    These record the actual beginning of each audio cycle.
+*/
+
+let cycleStartTimes = [];
+
+
+/*
+    The generated WAV URL.
+*/
+
+let currentAudioURL = null;
 
 
 /*
 ============================================================
-CREATE LITTLE-ENDIAN WAV HELPERS
+EVENT LOGGING
 ============================================================
 */
 
 
-function writeString(view, offset, string) {
+function logEvent(message) {
 
-    for (let i = 0; i < string.length; i++) {
+    const now =
+        new Date();
+
+    const timestamp =
+        now.toLocaleTimeString(
+            undefined,
+            {
+                hour12: false,
+                fractionalSecondDigits: 3
+            }
+        );
+
+    if (
+        logElement.textContent ===
+        "No events yet."
+    ) {
+
+        logElement.textContent = "";
+
+    }
+
+    logElement.textContent +=
+        "[" +
+        timestamp +
+        "] " +
+        message +
+        "\n";
+
+
+    /*
+        Automatically scroll to newest event.
+    */
+
+    logElement.scrollTop =
+        logElement.scrollHeight;
+
+}
+
+
+/*
+============================================================
+WAV HELPERS
+============================================================
+*/
+
+
+function writeString(
+    view,
+    offset,
+    string
+) {
+
+    for (
+        let i = 0;
+        i < string.length;
+        i++
+    ) {
 
         view.setUint8(
             offset + i,
@@ -268,7 +360,11 @@ function writeString(view, offset, string) {
 }
 
 
-function write16(view, offset, value) {
+function write16(
+    view,
+    offset,
+    value
+) {
 
     view.setUint16(
         offset,
@@ -279,7 +375,11 @@ function write16(view, offset, value) {
 }
 
 
-function write32(view, offset, value) {
+function write32(
+    view,
+    offset,
+    value
+) {
 
     view.setUint32(
         offset,
@@ -292,50 +392,36 @@ function write32(view, offset, value) {
 
 /*
 ============================================================
-CREATE THE REPEATING AUDIO TRACK
-============================================================
-
-The resulting waveform is:
-
-    | ALARM | silence....................... |
-    | ALARM | silence....................... |
-    | ALARM | silence....................... |
-
-The entire interval is contained inside the audio stream.
-
-There is NO setInterval() responsible for generating
-the actual alarm.
-
+CREATE WAV
 ============================================================
 */
 
 
-function createIntervalWav(intervalSeconds) {
+function createIntervalWav(
+    intervalSeconds
+) {
 
 
     /*
-        Number of samples in one complete interval.
+        EXACT number of PCM samples.
+
+        The nominal WAV duration is therefore:
+
+            totalSamples / 44100
+
+        seconds.
     */
 
     const totalSamples =
         Math.floor(
-            SAMPLE_RATE * intervalSeconds
+            SAMPLE_RATE *
+            intervalSeconds
         );
 
-
-    /*
-        Mono, 16-bit PCM.
-
-        2 bytes per sample.
-    */
 
     const dataBytes =
         totalSamples * 2;
 
-
-    /*
-        44-byte standard WAV header.
-    */
 
     const buffer =
         new ArrayBuffer(
@@ -348,9 +434,9 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-        ----------------------------------------------------
-        WAV HEADER
-        ----------------------------------------------------
+    --------------------------------------------------------
+    WAV HEADER
+    --------------------------------------------------------
     */
 
 
@@ -390,7 +476,7 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-        PCM format
+        PCM
     */
 
     write16(
@@ -423,8 +509,7 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-        Byte rate:
-        sample rate × channels × bytes/sample
+        Byte rate
     */
 
     write32(
@@ -446,7 +531,7 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-        16-bit audio
+        Bits per sample
     */
 
     write16(
@@ -471,15 +556,16 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-        ----------------------------------------------------
-        AUDIO
-        ----------------------------------------------------
+    --------------------------------------------------------
+    AUDIO DATA
+    --------------------------------------------------------
     */
 
 
     const alarmSamples =
         Math.floor(
-            SAMPLE_RATE * ALARM_DURATION
+            SAMPLE_RATE *
+            ALARM_DURATION
         );
 
 
@@ -494,11 +580,15 @@ function createIntervalWav(intervalSeconds) {
 
 
         /*
-            Only generate the alarm during the beginning
-            of each interval.
+            The alarm occurs at the VERY BEGINNING of
+            each interval.
+
+            Everything after the alarm is silence.
         */
 
-        if (i < alarmSamples) {
+        if (
+            i < alarmSamples
+        ) {
 
 
             const t =
@@ -510,19 +600,14 @@ function createIntervalWav(intervalSeconds) {
 
 
             /*
-                Aggressive frequency sweep.
-
-                Starts around 3000 Hz and drops to ~2100 Hz.
+                Downward frequency sweep:
+                3000 Hz → 2100 Hz
             */
 
             const frequency =
                 3000 -
                 900 * progress;
 
-
-            /*
-                Fundamental.
-            */
 
             const fundamental =
                 Math.sin(
@@ -532,10 +617,6 @@ function createIntervalWav(intervalSeconds) {
                     t
                 );
 
-
-            /*
-                Strong second harmonic.
-            */
 
             const harmonic2 =
                 0.65 *
@@ -547,10 +628,6 @@ function createIntervalWav(intervalSeconds) {
                     t
                 );
 
-
-            /*
-                Third harmonic.
-            */
 
             const harmonic3 =
                 0.30 *
@@ -564,25 +641,29 @@ function createIntervalWav(intervalSeconds) {
 
 
             /*
-                Extremely fast attack.
-
-                This makes the alarm "snap" on.
+                Very sharp attack/release.
             */
 
             let envelope;
 
 
-            if (progress < 0.015) {
+            if (
+                progress < 0.015
+            ) {
 
                 envelope =
-                    progress / 0.015;
+                    progress /
+                    0.015;
 
             }
 
-            else if (progress > 0.72) {
+            else if (
+                progress > 0.72
+            ) {
 
                 envelope =
-                    (1 - progress) / 0.28;
+                    (1 - progress) /
+                    0.28;
 
             }
 
@@ -592,10 +673,6 @@ function createIntervalWav(intervalSeconds) {
 
             }
 
-
-            /*
-                Combine harmonics.
-            */
 
             sample =
                 (
@@ -609,10 +686,6 @@ function createIntervalWav(intervalSeconds) {
                 envelope;
 
 
-            /*
-                Absolute safety against digital clipping.
-            */
-
             sample =
                 Math.max(
                     -1,
@@ -625,13 +698,6 @@ function createIntervalWav(intervalSeconds) {
         }
 
 
-        /*
-            Write signed 16-bit PCM.
-
-            All samples outside the alarm are simply zero,
-            producing silence.
-        */
-
         view.setInt16(
             44 + i * 2,
             sample * 32767,
@@ -642,9 +708,9 @@ function createIntervalWav(intervalSeconds) {
 
 
     /*
-    ========================================================
-    CONVERT WAV TO BASE64
-    ========================================================
+    --------------------------------------------------------
+    BASE64
+    --------------------------------------------------------
     */
 
 
@@ -654,13 +720,8 @@ function createIntervalWav(intervalSeconds) {
 
     let binary = "";
 
-
-    /*
-        Process in chunks so String.fromCharCode()
-        doesn't exceed argument limits.
-    */
-
-    const CHUNK_SIZE = 0x8000;
+    const CHUNK_SIZE =
+        0x8000;
 
 
     for (
@@ -687,12 +748,597 @@ function createIntervalWav(intervalSeconds) {
         btoa(binary);
 
 
-    return (
-        "data:audio/wav;base64," +
-        base64
-    );
+    return {
+        url:
+            "data:audio/wav;base64," +
+            base64,
+
+        totalSamples:
+            totalSamples,
+
+        nominalDuration:
+            totalSamples /
+            SAMPLE_RATE,
+
+        dataBytes:
+            dataBytes
+
+    };
 
 }
+
+
+/*
+============================================================
+UPDATE DIAGNOSTICS
+============================================================
+*/
+
+
+function updateDiagnostics() {
+
+
+    if (!audio.src) {
+
+        diagnostics.textContent =
+            "No audio loaded.";
+
+        return;
+
+    }
+
+
+    const actualAudioDuration =
+        audio.duration;
+
+
+    const currentTime =
+        audio.currentTime;
+
+
+    const readyState =
+        audio.readyState;
+
+
+    const networkState =
+        audio.networkState;
+
+
+    const paused =
+        audio.paused;
+
+
+    const ended =
+        audio.ended;
+
+
+    let elapsedTestTime =
+        0;
+
+
+    if (
+        testStartPerformance > 0
+    ) {
+
+        elapsedTestTime =
+            (
+                performance.now() -
+                testStartPerformance
+            ) / 1000;
+
+    }
+
+
+    diagnostics.textContent =
+
+        "Requested interval: " +
+        requestedInterval.toFixed(6) +
+        " s\n" +
+
+        "\n" +
+
+        "audio.duration: " +
+        (
+            Number.isFinite(
+                actualAudioDuration
+            )
+            ? actualAudioDuration.toFixed(6)
+            : "not available"
+        ) +
+        " s\n" +
+
+        "audio.currentTime: " +
+        currentTime.toFixed(6) +
+        " s\n" +
+
+        "\n" +
+
+        "WAV nominal duration: " +
+        (
+            window.wavInfo
+                ? window.wavInfo.nominalDuration.toFixed(6)
+                : "unknown"
+        ) +
+        " s\n" +
+
+        "WAV sample count: " +
+        (
+            window.wavInfo
+                ? window.wavInfo.totalSamples
+                : "unknown"
+        ) +
+        "\n" +
+
+        "Sample rate: " +
+        SAMPLE_RATE +
+        " Hz\n" +
+
+        "\n" +
+
+        "Nominal duration error: " +
+        (
+            window.wavInfo
+                ? (
+                    window.wavInfo.nominalDuration -
+                    requestedInterval
+                ).toFixed(6)
+                : "unknown"
+        ) +
+        " s\n" +
+
+        "Safari duration error: " +
+        (
+            Number.isFinite(
+                actualAudioDuration
+            )
+            ? (
+                actualAudioDuration -
+                requestedInterval
+            ).toFixed(6)
+            : "unknown"
+        ) +
+        " s\n" +
+
+        "\n" +
+
+        "Cycle number: " +
+        cycleNumber +
+        "\n" +
+
+        "Test elapsed: " +
+        elapsedTestTime.toFixed(3) +
+        " s\n" +
+
+        "\n" +
+
+        "paused: " +
+        paused +
+        "\n" +
+
+        "ended: " +
+        ended +
+        "\n" +
+
+        "readyState: " +
+        readyState +
+        "\n" +
+
+        "networkState: " +
+        networkState;
+
+
+}
+
+
+/*
+============================================================
+COUNTDOWN
+
+IMPORTANT:
+
+This is ONLY diagnostic.
+
+It does NOT control the alarm.
+
+============================================================
+*/
+
+
+function updateCountdown() {
+
+
+    if (!running) {
+        return;
+    }
+
+
+    /*
+        Use the actual audio position rather than
+        performance.now().
+
+        This allows us to see whether the visual display
+        follows Safari's media clock.
+    */
+
+    const duration =
+        audio.duration;
+
+
+    const position =
+        audio.currentTime;
+
+
+    if (
+        Number.isFinite(duration) &&
+        duration > 0
+    ) {
+
+        let remaining =
+            duration -
+            position;
+
+
+        /*
+            Don't let rounding produce a negative number.
+        */
+
+        remaining =
+            Math.max(
+                0,
+                remaining
+            );
+
+
+        countdown.textContent =
+            remaining.toFixed(3) +
+            " s";
+
+    }
+
+    else {
+
+        countdown.textContent =
+            "--";
+
+    }
+
+
+    updateDiagnostics();
+
+}
+
+
+/*
+============================================================
+AUDIO PLAY EVENT
+============================================================
+*/
+
+
+audio.addEventListener(
+    "play",
+    () => {
+
+        logEvent(
+            "audio PLAY event"
+        );
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO PLAYING EVENT
+============================================================
+*/
+
+
+audio.addEventListener(
+    "playing",
+    () => {
+
+        logEvent(
+            "audio PLAYING event"
+        );
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO TIMEUPDATE
+============================================================
+*/
+
+
+audio.addEventListener(
+    "timeupdate",
+    () => {
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO WAITING
+============================================================
+*/
+
+
+audio.addEventListener(
+    "waiting",
+    () => {
+
+        logEvent(
+            "audio WAITING — playback stalled"
+        );
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO STALLED
+============================================================
+*/
+
+
+audio.addEventListener(
+    "stalled",
+    () => {
+
+        logEvent(
+            "audio STALLED"
+        );
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO PAUSE
+============================================================
+*/
+
+
+audio.addEventListener(
+    "pause",
+    () => {
+
+        logEvent(
+            "audio PAUSE event"
+        );
+
+        if (running) {
+
+            status.textContent =
+                "WARNING:\n" +
+                "Safari paused the audio.";
+
+        }
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+AUDIO ENDED
+
+THIS IS THE MOST IMPORTANT DIAGNOSTIC EVENT.
+
+Because audio.loop = false, reaching this event means
+Safari believes it has reached the END of the WAV.
+
+We record exactly how long the previous cycle lasted.
+
+============================================================
+*/
+
+
+audio.addEventListener(
+    "ended",
+    async () => {
+
+
+        if (!running) {
+            return;
+        }
+
+
+        const now =
+            performance.now();
+
+
+        cycleNumber++;
+
+
+        /*
+            Calculate actual wall-clock time between
+            the starts/restarts of audio cycles.
+        */
+
+        let cycleInterval =
+            null;
+
+
+        if (
+            lastCyclePerformance !== null
+        ) {
+
+            cycleInterval =
+                (
+                    now -
+                    lastCyclePerformance
+                ) / 1000;
+
+        }
+
+
+        lastCyclePerformance =
+            now;
+
+
+        cycleStartTimes.push(
+            now
+        );
+
+
+        /*
+            Diagnostic log.
+        */
+
+        if (
+            cycleInterval !== null
+        ) {
+
+            logEvent(
+                "AUDIO ENDED / RESTART #" +
+                cycleNumber +
+                " — actual cycle interval = " +
+                cycleInterval.toFixed(6) +
+                " s"
+            );
+
+        }
+
+        else {
+
+            logEvent(
+                "AUDIO ENDED / RESTART #" +
+                cycleNumber
+            );
+
+        }
+
+
+        updateDiagnostics();
+
+
+        /*
+        ====================================================
+        RESTART AUDIO
+        ====================================================
+        */
+
+
+        audio.currentTime = 0;
+
+
+        try {
+
+            await audio.play();
+
+        }
+
+        catch (error) {
+
+            logEvent(
+                "RESTART FAILED: " +
+                error
+            );
+
+
+            status.textContent =
+                "Audio restart failed:\n" +
+                error;
+
+            running = false;
+
+            return;
+
+        }
+
+
+        /*
+            Record the restart as accurately as possible.
+        */
+
+        const restartNow =
+            performance.now();
+
+
+        /*
+            If the play() promise itself takes significant
+            time, record it in the log.
+        */
+
+        const restartDelay =
+            (
+                restartNow -
+                now
+            ) / 1000;
+
+
+        if (
+            restartDelay > 0.01
+        ) {
+
+            logEvent(
+                "Restart delay after ENDED = " +
+                restartDelay.toFixed(6) +
+                " s"
+            );
+
+        }
+
+
+        updateDiagnostics();
+
+    }
+);
+
+
+/*
+============================================================
+ERROR
+============================================================
+*/
+
+
+audio.addEventListener(
+    "error",
+    () => {
+
+        logEvent(
+            "AUDIO ERROR"
+        );
+
+
+        if (
+            audio.error
+        ) {
+
+            logEvent(
+                "MediaError code = " +
+                audio.error.code
+            );
+
+        }
+
+
+        status.textContent =
+            "Audio error.";
+
+    }
+);
 
 
 /*
@@ -710,19 +1356,11 @@ async function startAlarm() {
     }
 
 
-    /*
-        Read user input.
-    */
-
     const seconds =
         Number(
             intervalInput.value
         );
 
-
-    /*
-        Validate.
-    */
 
     if (
         !Number.isFinite(seconds) ||
@@ -742,58 +1380,108 @@ async function startAlarm() {
     }
 
 
-    intervalSeconds = seconds;
+    requestedInterval =
+        seconds;
 
 
     /*
-    ========================================================
-    THIS IS THE IMPORTANT PART
-    ========================================================
-
-    Build ONE audio track containing the alarm followed
-    by silence for the requested interval.
-
-    Safari's native audio engine then handles playback.
-    ========================================================
+        Clear old log.
     */
 
+    logElement.textContent =
+        "";
+
+
+    /*
+        Generate WAV.
+    */
 
     status.textContent =
-        "Creating audio track...\n" +
-        "Please wait.";
+        "Generating audio track...";
 
 
-    /*
-        Generate the WAV.
-    */
-
-    const wavUrl =
+    const wavInfo =
         createIntervalWav(
-            intervalSeconds
+            seconds
         );
 
 
     /*
-        Give it to the native audio element.
+        Make the information globally available
+        to the diagnostic display.
     */
 
-    audio.src = wavUrl;
+    window.wavInfo =
+        wavInfo;
 
-    audio.loop = true;
+
+    /*
+        Load audio.
+    */
+
+    audio.src =
+        wavInfo.url;
+
+
+    /*
+        VERY IMPORTANT:
+
+        Do NOT use audio.loop.
+
+        We want the "ended" event so we can measure
+        exactly when Safari reaches the end.
+    */
+
+    audio.loop = false;
+
 
     audio.volume = 1.0;
 
 
     /*
-    ========================================================
-    CRITICAL IOS USER-GESTURE STEP
-    ========================================================
+        Reset counters.
+    */
 
-    This function was triggered directly by the user's
-    START button.
+    cycleNumber = 0;
 
-    Therefore this play() occurs inside the user gesture,
-    which is what Safari wants before allowing audio.
+    cycleStartTimes = [];
+
+
+    /*
+        Start high-resolution diagnostic clock.
+    */
+
+    testStartPerformance =
+        performance.now();
+
+
+    lastCyclePerformance =
+        testStartPerformance;
+
+
+    /*
+        The first audio cycle starts HERE.
+
+        The actual acoustic sound may be delayed slightly
+        by the hardware/audio pipeline, but this gives us
+        the browser-side reference.
+    */
+
+    cycleStartTimes.push(
+        testStartPerformance
+    );
+
+
+    /*
+        Update diagnostics before playback.
+    */
+
+    updateDiagnostics();
+
+
+    /*
+    ========================================================
+    USER GESTURE → AUDIO PLAYBACK
     ========================================================
     */
 
@@ -808,119 +1496,58 @@ async function startAlarm() {
 
         status.textContent =
             "Safari blocked audio playback.\n\n" +
-            "Tap START again and make sure your " +
-            "iPhone is not in a state where media playback " +
-            "is blocked.\n\n" +
-            error;
+            String(error);
+
+        logEvent(
+            "INITIAL PLAY FAILED: " +
+            String(error)
+        );
 
         return;
 
     }
 
 
-    /*
-        Audio is now playing.
-    */
-
     running = true;
 
-    startTime =
-        performance.now();
+
+    intervalInput.disabled =
+        true;
 
 
     status.textContent =
         "RUNNING\n\n" +
-        "Native audio playback active\n" +
-        "Alarm every " +
-        intervalSeconds +
-        " seconds";
+        "Audio engine is the alarm clock.";
+
+
+    logEvent(
+        "START — requested interval = " +
+        seconds.toFixed(6) +
+        " s"
+    );
+
+
+    logEvent(
+        "WAV nominal duration = " +
+        wavInfo.nominalDuration.toFixed(6) +
+        " s"
+    );
 
 
     /*
-        Disable changing the interval while running.
-    */
+        Visual diagnostics update frequently.
 
-    intervalInput.disabled = true;
-
-
-    /*
-    ========================================================
-    VISUAL COUNTDOWN ONLY
-    ========================================================
-
-    This timer is NOT responsible for the alarm.
-
-    If iOS suspends this timer while the phone is locked,
-    the actual audio track continues to be handled by the
-    audio engine independently.
-
-    ========================================================
+        Again, this timer does NOT control the alarm.
     */
 
     countdownTimer =
         setInterval(
             updateCountdown,
-            100
+            50
         );
 
-}
 
-
-/*
-============================================================
-COUNTDOWN DISPLAY
-============================================================
-*/
-
-
-function updateCountdown() {
-
-
-    if (!running) {
-        return;
-    }
-
-
-    const elapsed =
-        (
-            performance.now() -
-            startTime
-        ) / 1000;
-
-
-    /*
-        Determine where we are within the repeating
-        interval.
-    */
-
-    const position =
-        elapsed %
-        intervalSeconds;
-
-
-    let remaining =
-        intervalSeconds -
-        position;
-
-
-    /*
-        Avoid displaying the full interval immediately
-        after the alarm.
-    */
-
-    if (
-        remaining >
-        intervalSeconds - 0.01
-    ) {
-
-        remaining = 0;
-
-    }
-
-
-    countdown.textContent =
-        remaining.toFixed(1) +
-        " s";
+    updateDiagnostics();
 
 }
 
@@ -938,11 +1565,9 @@ function stopAlarm() {
     running = false;
 
 
-    /*
-        Stop visual timer.
-    */
-
-    if (countdownTimer !== null) {
+    if (
+        countdownTimer !== null
+    ) {
 
         clearInterval(
             countdownTimer
@@ -953,34 +1578,14 @@ function stopAlarm() {
     }
 
 
-    /*
-        Stop native media playback.
-    */
-
     audio.pause();
+
 
     audio.currentTime = 0;
 
 
-    /*
-        Release the generated WAV URL.
-
-        The audio element will no longer need it.
-    */
-
-    if (
-        audio.src &&
-        audio.src.startsWith("blob:")
-    ) {
-
-        URL.revokeObjectURL(
-            audio.src
-        );
-
-    }
-
-
-    intervalInput.disabled = false;
+    intervalInput.disabled =
+        false;
 
 
     countdown.textContent =
@@ -990,12 +1595,20 @@ function stopAlarm() {
     status.textContent =
         "Stopped";
 
+
+    logEvent(
+        "STOP"
+    );
+
+
+    updateDiagnostics();
+
 }
 
 
 /*
 ============================================================
-BUTTON EVENTS
+BUTTONS
 ============================================================
 */
 
@@ -1012,54 +1625,8 @@ stopButton.addEventListener(
 );
 
 
-/*
-============================================================
-SAFETY / VISIBILITY INFORMATION
-============================================================
-
-If Safari tells us that the audio element was paused,
-show that on screen.
-
-============================================================
-*/
-
-
-audio.addEventListener(
-    "pause",
-    () => {
-
-        if (running) {
-
-            status.textContent =
-                "WARNING: iPhone/Safari paused " +
-                "the audio playback.";
-
-        }
-
-    }
-);
-
-
-audio.addEventListener(
-    "playing",
-    () => {
-
-        if (running) {
-
-            status.textContent =
-                "RUNNING\n\n" +
-                "Native audio playback active\n" +
-                "Alarm every " +
-                intervalSeconds +
-                " seconds";
-
-        }
-
-    }
-);
-
-
 </script>
 
 </body>
+
 </html>
