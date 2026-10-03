@@ -3,14 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <meta name="referrer" content="strict-origin-when-cross-origin">
-
-    <script>
-        if ("audioSession" in navigator) {
-            navigator.audioSession.type = "playback";
-        }
-    </script>
 
     <title>YouTube Background Playback Test</title>
 
@@ -46,7 +39,7 @@
 
 <div class="container">
 
-    <h1>iOS YouTube Background Playback Test 1</h1>
+    <h1>iOS YouTube Background Playback Test 11</h1>
 
     <p>
         Play the video, do NOT activate Picture-in-Picture,
@@ -54,6 +47,12 @@
     </p>
 
     <div class="player">
+
+        <script>
+            if ("audioSession" in navigator) {
+                navigator.audioSession.type = "playback";
+            }
+        </script>
 
         <iframe
             src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE?playsinline=1"
