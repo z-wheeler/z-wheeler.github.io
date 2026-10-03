@@ -36,6 +36,60 @@
 </head>
 
 <body>
+<button onclick="checkAudioSession()">Check Audio Session</button> <button onclick="showConsoleErrors()">Show Console Errors</button>
+
+<p id="audioSessionResult">Not checked yet.</p>
+<p id="consoleResult">No errors captured yet.</p>
+
+<script>
+    // Capture JavaScript errors and display them on the page
+    const capturedErrors = [];
+
+    window.addEventListener("error", function (event) {
+        capturedErrors.push(
+            "ERROR: " +
+            event.message +
+            " at " +
+            event.filename +
+            ":" +
+            event.lineno +
+            ":" +
+            event.colno
+        );
+    });
+
+    // Capture rejected Promises, including audio.play() failures
+    window.addEventListener("unhandledrejection", function (event) {
+        capturedErrors.push(
+            "UNHANDLED PROMISE REJECTION: " +
+            (event.reason?.stack || event.reason || "Unknown rejection")
+        );
+    });
+
+    function checkAudioSession() {
+        const result = document.getElementById("audioSessionResult");
+
+        if (!("audioSession" in navigator)) {
+            result.textContent =
+                "navigator.audioSession is NOT available in this Safari.";
+            return;
+        }
+
+        result.textContent =
+            "navigator.audioSession IS available. Type: " +
+            navigator.audioSession.type;
+    }
+
+    function showConsoleErrors() {
+        const result = document.getElementById("consoleResult");
+
+        if (capturedErrors.length === 0) {
+            result.textContent = "No JavaScript errors have been captured.";
+        } else {
+            result.textContent = capturedErrors.join("\n\n");
+        }
+    }
+</script>
 
 <div class="container">
 
@@ -84,7 +138,25 @@
                         navigator.audioSession.type = "playback";
                     }
     
-                    await keepAlive.play();
+                    try {
+                        await keepAlive.play();
+                    
+                        document.getElementById("audioSessionResult").textContent =
+                            "keepAlive.play() SUCCEEDED. " +
+                            "paused=" + keepAlive.paused +
+                            ", readyState=" + keepAlive.readyState +
+                            ", currentTime=" + keepAlive.currentTime;
+                    
+                    } catch (error) {
+                    
+                        document.getElementById("audioSessionResult").textContent =
+                            "keepAlive.play() FAILED: " +
+                            error.name + ": " + error.message;
+                    
+                        console.error("keepAlive.play() failed:", error);
+                    
+                        throw error;
+                    }
     
                     const iframe = document.getElementById("youtube");
     
