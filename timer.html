@@ -1,229 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
-
-<title>iPhone Interval Alarm Diagnostic</title>
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+<title>Interval Alarm</title>
 
 <style>
+    * {
+        box-sizing: border-box;
+    }
 
     body {
         margin: 0;
-        padding: 25px 15px;
+        padding: 20px;
         background: #111;
         color: white;
-        font-family:
-            -apple-system,
-            BlinkMacSystemFont,
-            "Helvetica Neue",
-            sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        text-align: center;
     }
 
     h1 {
-        text-align: center;
-        font-size: 27px;
+        margin-top: 10px;
+        font-size: 28px;
     }
 
-    .controls {
-        text-align: center;
+    .container {
+        max-width: 500px;
+        margin: auto;
     }
 
     label {
         display: block;
-        font-size: 18px;
         margin-top: 20px;
-        margin-bottom: 8px;
+        font-size: 18px;
     }
 
     input {
-        width: 120px;
-        padding: 10px;
-        font-size: 25px;
+        width: 100%;
+        padding: 14px;
+        margin-top: 8px;
+        font-size: 22px;
         text-align: center;
         border-radius: 10px;
-        border: none;
+        border: 1px solid #555;
+        background: #222;
+        color: white;
     }
 
     button {
+        width: 100%;
+        padding: 16px;
+        margin-top: 15px;
         font-size: 20px;
-        padding: 14px 25px;
-        margin: 10px 5px;
+        font-weight: bold;
         border: none;
-        border-radius: 12px;
+        border-radius: 10px;
+        background: #333;
+        color: white;
+    }
+
+    button:active {
+        background: #555;
     }
 
     #startButton {
-        background: #34c759;
-        color: white;
+        background: #087f23;
     }
 
     #stopButton {
-        background: #ff3b30;
-        color: white;
-    }
-
-    #countdown {
-        text-align: center;
-        font-size: 50px;
-        font-weight: bold;
-        margin: 25px 0 10px;
-        font-variant-numeric: tabular-nums;
+        background: #9b1515;
     }
 
     #status {
-        text-align: center;
-        white-space: pre-line;
-        font-size: 17px;
-        margin-bottom: 20px;
+        margin-top: 25px;
+        font-size: 20px;
+        min-height: 30px;
     }
 
-    #diagnostics {
-        background: #222;
-        border-radius: 12px;
-        padding: 15px;
-        font-family: monospace;
+    #timer {
+        margin-top: 10px;
+        font-size: 48px;
+        font-weight: bold;
+        font-variant-numeric: tabular-nums;
+    }
+
+    #audioInfo {
+        margin-top: 20px;
         font-size: 14px;
-        line-height: 1.55;
+        color: #aaa;
+        line-height: 1.5;
+        text-align: left;
         white-space: pre-wrap;
-        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     #log {
-        margin-top: 15px;
-        background: #181818;
-        border-radius: 12px;
-        padding: 12px;
+        margin-top: 20px;
+        padding: 10px;
+        background: #050505;
+        border: 1px solid #333;
+        border-radius: 8px;
         font-family: monospace;
         font-size: 12px;
-        line-height: 1.45;
+        text-align: left;
         white-space: pre-wrap;
-        max-height: 300px;
+        max-height: 250px;
         overflow-y: auto;
     }
-
-    .section {
-        margin-top: 20px;
-        font-weight: bold;
-        color: #aaa;
-    }
-
 </style>
-
 </head>
-
 
 <body>
 
+<div class="container">
 
-<h1>⏱ Interval Alarm Diagnostic</h1>
+    <h1>Interval Alarm</h1>
 
-
-<div class="controls">
-
-    <label for="interval">
-        Alarm interval
+    <label for="intervalInput">
+        Interval (seconds)
     </label>
 
     <input
-        id="interval"
+        id="intervalInput"
         type="number"
-        min="1"
-        max="300"
-        step="1"
+        min="0.1"
+        max="60"
+        step="0.1"
         value="5"
     >
 
-    <span>seconds</span>
-
-    <br>
+    <button id="generateButton">
+        Generate Audio
+    </button>
 
     <button id="startButton">
-        START
+        Start
     </button>
 
     <button id="stopButton">
-        STOP
+        Stop
     </button>
 
+    <div id="status">
+        Ready
+    </div>
+
+    <div id="timer">
+        0.0
+    </div>
+
+    <div id="audioInfo"></div>
+
+    <div id="log"></div>
+
 </div>
 
-
-<div id="countdown">
-    --
-</div>
-
-
-<div id="status">
-    Stopped
-</div>
-
-
-<div class="section">
-    AUDIO DIAGNOSTICS
-</div>
-
-
-<div id="diagnostics">
-Waiting for test...
-</div>
-
-
-<div class="section">
-    EVENT LOG
-</div>
-
-
-<div id="log">
-No events yet.
-</div>
-
-
-<audio
-    id="audio"
-    playsinline
-    preload="auto">
-</audio>
-
+<audio id="alarmAudio"
+       preload="auto"
+       playsinline></audio>
 
 <script>
 
+"use strict";
 
-/*
-============================================================
-CONFIGURATION
-============================================================
-*/
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
 
+const SAMPLE_RATE = 8000;
 
-const SAMPLE_RATE = 44100;
+// Entire native audio track.
+const TRACK_SECONDS = 70;
 
-const ALARM_DURATION = 0.18;
+// Normal interval activity only occurs during this window.
+const ACTIVE_SECONDS = 60;
 
-const MIN_INTERVAL = 1;
+// Final portion reserved for loop marker.
+const LOOP_MARKER_START = 69;
 
-const MAX_INTERVAL = 300;
-
-
-/*
-============================================================
-DOM
-============================================================
-*/
+// How long each normal alarm lasts.
+const BLIP_DURATION = 0.18;
 
 
-const audio =
-    document.getElementById("audio");
+/* ============================================================
+   DOM
+   ============================================================ */
 
 const intervalInput =
-    document.getElementById("interval");
+    document.getElementById("intervalInput");
+
+const generateButton =
+    document.getElementById("generateButton");
 
 const startButton =
     document.getElementById("startButton");
@@ -231,1386 +200,1042 @@ const startButton =
 const stopButton =
     document.getElementById("stopButton");
 
-const countdown =
-    document.getElementById("countdown");
-
 const status =
     document.getElementById("status");
 
-const diagnostics =
-    document.getElementById("diagnostics");
+const timer =
+    document.getElementById("timer");
+
+const audioInfo =
+    document.getElementById("audioInfo");
 
 const logElement =
     document.getElementById("log");
 
-
-/*
-============================================================
-STATE
-============================================================
-*/
+const audio =
+    document.getElementById("alarmAudio");
 
 
-let running = false;
+/* ============================================================
+   STATE
+   ============================================================ */
 
-let requestedInterval = 0;
+let currentInterval = 5;
 
-let cycleNumber = 0;
+let audioURL = null;
 
-let countdownTimer = null;
+let timerAnimationFrame = null;
 
-
-/*
-    High-resolution JavaScript timestamps.
-*/
-
-let testStartPerformance = 0;
-
-let lastCyclePerformance = null;
+let startPerformanceTime = 0;
 
 
-/*
-    These record the actual beginning of each audio cycle.
-*/
+/* ============================================================
+   LOGGING
+   ============================================================ */
 
-let cycleStartTimes = [];
+function log(message) {
 
-
-/*
-    The generated WAV URL.
-*/
-
-let currentAudioURL = null;
-
-
-/*
-============================================================
-EVENT LOGGING
-============================================================
-*/
-
-
-function logEvent(message) {
-
-    const now =
-        new Date();
+    const now = new Date();
 
     const timestamp =
-        now.toLocaleTimeString(
-            undefined,
-            {
-                hour12: false,
-                fractionalSecondDigits: 3
-            }
-        );
-
-    if (
-        logElement.textContent ===
-        "No events yet."
-    ) {
-
-        logElement.textContent = "";
-
-    }
+        now.toLocaleTimeString() + "." +
+        String(now.getMilliseconds()).padStart(3, "0");
 
     logElement.textContent +=
-        "[" +
-        timestamp +
-        "] " +
-        message +
-        "\n";
+        "[" + timestamp + "] " + message + "\n";
 
-
-    /*
-        Automatically scroll to newest event.
-    */
-
-    logElement.scrollTop =
-        logElement.scrollHeight;
-
+    logElement.scrollTop = logElement.scrollHeight;
 }
 
 
-/*
-============================================================
-WAV HELPERS
-============================================================
-*/
+/* ============================================================
+   WAV UTILITIES
+   ============================================================ */
 
+function writeString(view, offset, string) {
 
-function writeString(
-    view,
-    offset,
-    string
-) {
-
-    for (
-        let i = 0;
-        i < string.length;
-        i++
-    ) {
-
+    for (let i = 0; i < string.length; i++) {
         view.setUint8(
             offset + i,
             string.charCodeAt(i)
         );
-
     }
-
 }
 
 
-function write16(
-    view,
-    offset,
-    value
-) {
+function createWavBlob(samples, sampleRate) {
 
-    view.setUint16(
-        offset,
-        value,
-        true
-    );
+    const numChannels = 1;
+    const bitsPerSample = 16;
 
-}
-
-
-function write32(
-    view,
-    offset,
-    value
-) {
-
-    view.setUint32(
-        offset,
-        value,
-        true
-    );
-
-}
-
-
-/*
-============================================================
-CREATE WAV
-============================================================
-*/
-
-
-function createIntervalWav(
-    intervalSeconds
-) {
-
-
-    /*
-        EXACT number of PCM samples.
-
-        The nominal WAV duration is therefore:
-
-            totalSamples / 44100
-
-        seconds.
-    */
-
-    const totalSamples =
-        Math.floor(
-            SAMPLE_RATE *
-            intervalSeconds
-        );
-
-
-    const dataBytes =
-        totalSamples * 2;
-
+    const dataSize =
+        samples.length * 2;
 
     const buffer =
-        new ArrayBuffer(
-            44 + dataBytes
-        );
-
+        new ArrayBuffer(44 + dataSize);
 
     const view =
         new DataView(buffer);
 
 
-    /*
-    --------------------------------------------------------
-    WAV HEADER
-    --------------------------------------------------------
-    */
+    // RIFF header
+    writeString(view, 0, "RIFF");
 
-
-    writeString(
-        view,
-        0,
-        "RIFF"
-    );
-
-
-    write32(
-        view,
+    view.setUint32(
         4,
-        36 + dataBytes
+        36 + dataSize,
+        true
     );
 
-
-    writeString(
-        view,
-        8,
-        "WAVE"
-    );
+    writeString(view, 8, "WAVE");
 
 
-    writeString(
-        view,
-        12,
-        "fmt "
-    );
+    // fmt chunk
+    writeString(view, 12, "fmt ");
 
-
-    write32(
-        view,
+    view.setUint32(
         16,
-        16
+        16,
+        true
     );
 
-
-    /*
-        PCM
-    */
-
-    write16(
-        view,
+    // PCM
+    view.setUint16(
         20,
-        1
+        1,
+        true
     );
 
-
-    /*
-        Mono
-    */
-
-    write16(
-        view,
+    view.setUint16(
         22,
-        1
+        numChannels,
+        true
+    );
+
+    view.setUint32(
+        24,
+        sampleRate,
+        true
+    );
+
+    view.setUint32(
+        28,
+        sampleRate *
+        numChannels *
+        bitsPerSample / 8,
+        true
+    );
+
+    view.setUint16(
+        32,
+        numChannels *
+        bitsPerSample / 8,
+        true
+    );
+
+    view.setUint16(
+        34,
+        bitsPerSample,
+        true
     );
 
 
+    // data chunk
+    writeString(view, 36, "data");
+
+    view.setUint32(
+        40,
+        dataSize,
+        true
+    );
+
+
+    // Samples
+    let offset = 44;
+
+    for (let i = 0; i < samples.length; i++) {
+
+        let sample = samples[i];
+
+        sample =
+            Math.max(-1, Math.min(1, sample));
+
+        view.setInt16(
+            offset,
+            sample < 0
+                ? sample * 32768
+                : sample * 32767,
+            true
+        );
+
+        offset += 2;
+    }
+
+
+    return new Blob(
+        [buffer],
+        { type: "audio/wav" }
+    );
+}
+
+
+/* ============================================================
+   SOUND GENERATORS
+   ============================================================ */
+
+/*
+   Normal alarm:
+
+   Aggressive short burst consisting of multiple harmonics
+   with a fast attack and decay.
+*/
+
+function addBlip(
+    samples,
+    startTime,
+    sampleRate
+) {
+
+    const start =
+        Math.floor(
+            startTime * sampleRate
+        );
+
+    const length =
+        Math.floor(
+            BLIP_DURATION * sampleRate
+        );
+
+    const frequencies = [
+        900,
+        1350,
+        1800,
+        2700
+    ];
+
+
+    for (let i = 0; i < length; i++) {
+
+        const index =
+            start + i;
+
+        if (index < 0 || index >= samples.length) {
+            continue;
+        }
+
+        const t =
+            i / sampleRate;
+
+        const progress =
+            i / length;
+
+
+        /*
+           Fast attack, fairly aggressive decay.
+        */
+
+        const envelope =
+            Math.pow(
+                1 - progress,
+                2.2
+            );
+
+
+        let value = 0;
+
+        for (const frequency of frequencies) {
+
+            value +=
+                Math.sin(
+                    2 * Math.PI *
+                    frequency * t
+                );
+        }
+
+
+        value /=
+            frequencies.length;
+
+
+        /*
+           Add some square-wave character
+           for a harsher alarm sound.
+        */
+
+        const square =
+            Math.sign(
+                Math.sin(
+                    2 * Math.PI *
+                    1800 * t
+                )
+            );
+
+
+        value =
+            value * 0.65 +
+            square * 0.35;
+
+
+        samples[index] +=
+            value *
+            envelope *
+            0.95;
+    }
+}
+
+
+/*
+   Distinctive start sound:
+   rising two-tone.
+*/
+
+function addStartSound(
+    samples,
+    startTime,
+    sampleRate
+) {
+
+    const duration = 0.45;
+
+    const start =
+        Math.floor(
+            startTime * sampleRate
+        );
+
+    const length =
+        Math.floor(
+            duration * sampleRate
+        );
+
+
+    for (let i = 0; i < length; i++) {
+
+        const index =
+            start + i;
+
+        if (index >= samples.length) {
+            continue;
+        }
+
+        const t =
+            i / sampleRate;
+
+        let frequency;
+
+        if (t < 0.20) {
+            frequency = 700;
+        } else {
+            frequency = 1200;
+        }
+
+        const localT =
+            t < 0.20
+                ? t
+                : t - 0.20;
+
+
+        const envelope =
+            Math.min(
+                1,
+                localT / 0.015
+            ) *
+            Math.pow(
+                1 - t / duration,
+                1.5
+            );
+
+
+        samples[index] +=
+            Math.sin(
+                2 * Math.PI *
+                frequency * t
+            ) *
+            envelope *
+            0.8;
+    }
+}
+
+
+/*
+   Distinctive loop marker.
+
+   This should sound obviously different from
+   the normal alarm.
+*/
+
+function addLoopSound(
+    samples,
+    startTime,
+    sampleRate
+) {
+
+    const duration = 0.8;
+
+    const start =
+        Math.floor(
+            startTime * sampleRate
+        );
+
+    const length =
+        Math.floor(
+            duration * sampleRate
+        );
+
+
+    for (let i = 0; i < length; i++) {
+
+        const index =
+            start + i;
+
+        if (index >= samples.length) {
+            continue;
+        }
+
+        const t =
+            i / sampleRate;
+
+
+        /*
+           Three descending tones.
+        */
+
+        let frequency;
+
+        if (t < 0.25) {
+            frequency = 1600;
+        }
+        else if (t < 0.50) {
+            frequency = 1100;
+        }
+        else {
+            frequency = 700;
+        }
+
+
+        const envelope =
+            Math.min(
+                1,
+                t / 0.015
+            ) *
+            Math.pow(
+                1 - t / duration,
+                1.4
+            );
+
+
+        const tone =
+            Math.sin(
+                2 * Math.PI *
+                frequency *
+                t
+            );
+
+
+        /*
+           Add a second harmonic to make
+           the loop marker more recognizable.
+        */
+
+        const harmonic =
+            0.35 *
+            Math.sin(
+                2 * Math.PI *
+                frequency * 2 *
+                t
+            );
+
+
+        samples[index] +=
+            (tone + harmonic) *
+            envelope *
+            0.85;
+    }
+}
+
+
+/* ============================================================
+   GENERATE THE 70-SECOND TRACK
+   ============================================================ */
+
+function generateAudio() {
+
+    const interval =
+        Number(intervalInput.value);
+
+
+    if (!Number.isFinite(interval)) {
+
+        status.textContent =
+            "Enter a valid interval.";
+
+        return;
+    }
+
+
+    if (interval <= 0) {
+
+        status.textContent =
+            "Interval must be greater than zero.";
+
+        return;
+    }
+
+
+    if (interval > ACTIVE_SECONDS) {
+
+        status.textContent =
+            "Interval must be 60 seconds or less.";
+
+        return;
+    }
+
+
+    currentInterval = interval;
+
+
+    status.textContent =
+        "Generating 70-second audio...";
+
+
+    log("");
+    log("================================");
+    log("GENERATING AUDIO");
+    log("Interval = " +
+        interval.toFixed(3) +
+        " s");
+    log("Track = " +
+        TRACK_SECONDS.toFixed(3) +
+        " s");
+    log("Active window = " +
+        ACTIVE_SECONDS.toFixed(3) +
+        " s");
+    log("Sample rate = " +
+        SAMPLE_RATE +
+        " Hz");
+
+
     /*
-        Sample rate
+       Number of samples in exactly 70 seconds.
     */
 
-    write32(
-        view,
-        24,
+    const totalSamples =
+        Math.round(
+            TRACK_SECONDS *
+            SAMPLE_RATE
+        );
+
+
+    const samples =
+        new Float32Array(
+            totalSamples
+        );
+
+
+    /*
+       START SOUND
+    */
+
+    addStartSound(
+        samples,
+        0.05,
         SAMPLE_RATE
     );
 
 
     /*
-        Byte rate
+       NORMAL BLIPS
+
+       Start at the entered interval.
+
+       We deliberately do NOT put a normal
+       blip at exactly t = 0 because the start
+       sound already indicates activation.
     */
 
-    write32(
-        view,
-        28,
-        SAMPLE_RATE * 2
-    );
-
-
-    /*
-        Block alignment
-    */
-
-    write16(
-        view,
-        32,
-        2
-    );
-
-
-    /*
-        Bits per sample
-    */
-
-    write16(
-        view,
-        34,
-        16
-    );
-
-
-    writeString(
-        view,
-        36,
-        "data"
-    );
-
-
-    write32(
-        view,
-        40,
-        dataBytes
-    );
-
-
-    /*
-    --------------------------------------------------------
-    AUDIO DATA
-    --------------------------------------------------------
-    */
-
-
-    const alarmSamples =
-        Math.floor(
-            SAMPLE_RATE *
-            ALARM_DURATION
-        );
-
+    let blipCount = 0;
 
     for (
-        let i = 0;
-        i < totalSamples;
-        i++
+        let time = interval;
+        time < ACTIVE_SECONDS;
+        time += interval
     ) {
 
-
-        let sample = 0;
-
-
         /*
-            The alarm occurs at the VERY BEGINNING of
-            each interval.
-
-            Everything after the alarm is silence.
+           Leave enough room for the loop marker.
         */
 
         if (
-            i < alarmSamples
+            time + BLIP_DURATION >=
+            LOOP_MARKER_START
         ) {
-
-
-            const t =
-                i / SAMPLE_RATE;
-
-
-            const progress =
-                i / alarmSamples;
-
-
-            /*
-                Downward frequency sweep:
-                3000 Hz → 2100 Hz
-            */
-
-            const frequency =
-                3000 -
-                900 * progress;
-
-
-            const fundamental =
-                Math.sin(
-                    2 *
-                    Math.PI *
-                    frequency *
-                    t
-                );
-
-
-            const harmonic2 =
-                0.65 *
-                Math.sin(
-                    2 *
-                    Math.PI *
-                    frequency *
-                    2 *
-                    t
-                );
-
-
-            const harmonic3 =
-                0.30 *
-                Math.sin(
-                    2 *
-                    Math.PI *
-                    frequency *
-                    3 *
-                    t
-                );
-
-
-            /*
-                Very sharp attack/release.
-            */
-
-            let envelope;
-
-
-            if (
-                progress < 0.015
-            ) {
-
-                envelope =
-                    progress /
-                    0.015;
-
-            }
-
-            else if (
-                progress > 0.72
-            ) {
-
-                envelope =
-                    (1 - progress) /
-                    0.28;
-
-            }
-
-            else {
-
-                envelope = 1;
-
-            }
-
-
-            sample =
-                (
-                    fundamental +
-                    harmonic2 +
-                    harmonic3
-                )
-                *
-                0.72
-                *
-                envelope;
-
-
-            sample =
-                Math.max(
-                    -1,
-                    Math.min(
-                        1,
-                        sample
-                    )
-                );
-
+            break;
         }
 
 
-        view.setInt16(
-            44 + i * 2,
-            sample * 32767,
-            true
+        addBlip(
+            samples,
+            time,
+            SAMPLE_RATE
         );
 
+        blipCount++;
     }
 
 
     /*
-    --------------------------------------------------------
-    BASE64
-    --------------------------------------------------------
+       DISTINCTIVE LOOP MARKER
     */
 
-
-    const bytes =
-        new Uint8Array(buffer);
-
-
-    let binary = "";
-
-    const CHUNK_SIZE =
-        0x8000;
+    addLoopSound(
+        samples,
+        LOOP_MARKER_START,
+        SAMPLE_RATE
+    );
 
 
-    for (
-        let i = 0;
-        i < bytes.length;
-        i += CHUNK_SIZE
-    ) {
+    /*
+       Prevent any numerical overshoot
+       from exceeding the valid PCM range.
+    */
 
-        binary +=
-            String.fromCharCode(
-                ...bytes.subarray(
-                    i,
-                    Math.min(
-                        i + CHUNK_SIZE,
-                        bytes.length
-                    )
-                )
-            );
+    for (let i = 0; i < samples.length; i++) {
 
+        if (samples[i] > 1) {
+            samples[i] = 1;
+        }
+        else if (samples[i] < -1) {
+            samples[i] = -1;
+        }
     }
 
 
-    const base64 =
-        btoa(binary);
+    const blob =
+        createWavBlob(
+            samples,
+            SAMPLE_RATE
+        );
 
 
-    return {
-        url:
-            "data:audio/wav;base64," +
-            base64,
+    /*
+       Release the previous Blob URL.
+    */
 
-        totalSamples:
-            totalSamples,
+    if (audioURL !== null) {
 
-        nominalDuration:
-            totalSamples /
-            SAMPLE_RATE,
-
-        dataBytes:
-            dataBytes
-
-    };
-
-}
-
-
-/*
-============================================================
-UPDATE DIAGNOSTICS
-============================================================
-*/
-
-
-function updateDiagnostics() {
-
-
-    if (!audio.src) {
-
-        diagnostics.textContent =
-            "No audio loaded.";
-
-        return;
-
+        URL.revokeObjectURL(
+            audioURL
+        );
     }
 
 
-    const actualAudioDuration =
-        audio.duration;
+    audioURL =
+        URL.createObjectURL(blob);
 
 
-    const currentTime =
-        audio.currentTime;
+    audio.src =
+        audioURL;
+
+    audio.loop = true;
 
 
-    const readyState =
-        audio.readyState;
+    /*
+       Force Safari to recognize the
+       newly generated media.
+    */
+
+    audio.load();
 
 
-    const networkState =
-        audio.networkState;
+    const sizeMB =
+        blob.size /
+        (1024 * 1024);
 
 
-    const paused =
-        audio.paused;
-
-
-    const ended =
-        audio.ended;
-
-
-    let elapsedTestTime =
-        0;
-
-
-    if (
-        testStartPerformance > 0
-    ) {
-
-        elapsedTestTime =
-            (
-                performance.now() -
-                testStartPerformance
-            ) / 1000;
-
-    }
-
-
-    diagnostics.textContent =
-
-        "Requested interval: " +
-        requestedInterval.toFixed(6) +
+    audioInfo.textContent =
+        "Interval: " +
+        interval.toFixed(3) +
         " s\n" +
 
+        "Track duration: " +
+        TRACK_SECONDS.toFixed(3) +
+        " s\n" +
+
+        "Normal blips: " +
+        blipCount +
         "\n" +
 
-        "audio.duration: " +
-        (
-            Number.isFinite(
-                actualAudioDuration
-            )
-            ? actualAudioDuration.toFixed(6)
-            : "not available"
-        ) +
-        " s\n" +
+        "Normal-blip window: 0–60 s\n" +
 
-        "audio.currentTime: " +
-        currentTime.toFixed(6) +
-        " s\n" +
-
-        "\n" +
-
-        "WAV nominal duration: " +
-        (
-            window.wavInfo
-                ? window.wavInfo.nominalDuration.toFixed(6)
-                : "unknown"
-        ) +
-        " s\n" +
-
-        "WAV sample count: " +
-        (
-            window.wavInfo
-                ? window.wavInfo.totalSamples
-                : "unknown"
-        ) +
-        "\n" +
+        "Loop marker: 69–69.8 s\n" +
 
         "Sample rate: " +
         SAMPLE_RATE +
         " Hz\n" +
 
-        "\n" +
+        "WAV size: " +
+        sizeMB.toFixed(2) +
+        " MB\n" +
 
-        "Nominal duration error: " +
+        "Audio loop: NATIVE";
+
+
+    status.textContent =
+        "Audio generated — ready";
+
+
+    log(
+        "Samples = " +
+        totalSamples
+    );
+
+    log(
+        "Nominal duration = " +
         (
-            window.wavInfo
-                ? (
-                    window.wavInfo.nominalDuration -
-                    requestedInterval
-                ).toFixed(6)
-                : "unknown"
-        ) +
-        " s\n" +
+            totalSamples /
+            SAMPLE_RATE
+        ).toFixed(6) +
+        " s"
+    );
 
-        "Safari duration error: " +
-        (
-            Number.isFinite(
-                actualAudioDuration
-            )
-            ? (
-                actualAudioDuration -
-                requestedInterval
-            ).toFixed(6)
-            : "unknown"
-        ) +
-        " s\n" +
+    log(
+        "Blips generated = " +
+        blipCount
+    );
 
-        "\n" +
+    log(
+        "WAV size = " +
+        sizeMB.toFixed(2) +
+        " MB"
+    );
 
-        "Cycle number: " +
-        cycleNumber +
-        "\n" +
-
-        "Test elapsed: " +
-        elapsedTestTime.toFixed(3) +
-        " s\n" +
-
-        "\n" +
-
-        "paused: " +
-        paused +
-        "\n" +
-
-        "ended: " +
-        ended +
-        "\n" +
-
-        "readyState: " +
-        readyState +
-        "\n" +
-
-        "networkState: " +
-        networkState;
-
-
-}
-
-
-/*
-============================================================
-COUNTDOWN
-
-IMPORTANT:
-
-This is ONLY diagnostic.
-
-It does NOT control the alarm.
-
-============================================================
-*/
-
-
-function updateCountdown() {
-
-
-    if (!running) {
-        return;
-    }
+    log(
+        "Native audio loop enabled."
+    );
 
 
     /*
-        Use the actual audio position rather than
-        performance.now().
-
-        This allows us to see whether the visual display
-        follows Safari's media clock.
+       Wait for metadata so we can report
+       what Safari actually thinks the duration is.
     */
 
-    const duration =
-        audio.duration;
+    audio.addEventListener(
+        "loadedmetadata",
+        function metadataHandler() {
 
-
-    const position =
-        audio.currentTime;
-
-
-    if (
-        Number.isFinite(duration) &&
-        duration > 0
-    ) {
-
-        let remaining =
-            duration -
-            position;
-
-
-        /*
-            Don't let rounding produce a negative number.
-        */
-
-        remaining =
-            Math.max(
-                0,
-                remaining
+            audio.removeEventListener(
+                "loadedmetadata",
+                metadataHandler
             );
 
 
-        countdown.textContent =
-            remaining.toFixed(3) +
-            " s";
-
-    }
-
-    else {
-
-        countdown.textContent =
-            "--";
-
-    }
+            log(
+                "Safari audio.duration = " +
+                audio.duration.toFixed(6) +
+                " s"
+            );
 
 
-    updateDiagnostics();
-
+            log(
+                "Safari duration error = " +
+                (
+                    audio.duration -
+                    TRACK_SECONDS
+                ).toFixed(6) +
+                " s"
+            );
+        }
+    );
 }
 
 
-/*
-============================================================
-AUDIO PLAY EVENT
-============================================================
-*/
-
-
-audio.addEventListener(
-    "play",
-    () => {
-
-        logEvent(
-            "audio PLAY event"
-        );
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO PLAYING EVENT
-============================================================
-*/
-
-
-audio.addEventListener(
-    "playing",
-    () => {
-
-        logEvent(
-            "audio PLAYING event"
-        );
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO TIMEUPDATE
-============================================================
-*/
-
-
-audio.addEventListener(
-    "timeupdate",
-    () => {
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO WAITING
-============================================================
-*/
-
-
-audio.addEventListener(
-    "waiting",
-    () => {
-
-        logEvent(
-            "audio WAITING — playback stalled"
-        );
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO STALLED
-============================================================
-*/
-
-
-audio.addEventListener(
-    "stalled",
-    () => {
-
-        logEvent(
-            "audio STALLED"
-        );
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO PAUSE
-============================================================
-*/
-
-
-audio.addEventListener(
-    "pause",
-    () => {
-
-        logEvent(
-            "audio PAUSE event"
-        );
-
-        if (running) {
-
-            status.textContent =
-                "WARNING:\n" +
-                "Safari paused the audio.";
-
-        }
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-AUDIO ENDED
-
-THIS IS THE MOST IMPORTANT DIAGNOSTIC EVENT.
-
-Because audio.loop = false, reaching this event means
-Safari believes it has reached the END of the WAV.
-
-We record exactly how long the previous cycle lasted.
-
-============================================================
-*/
-
-
-audio.addEventListener(
-    "ended",
-    async () => {
-
-
-        if (!running) {
-            return;
-        }
-
-
-        const now =
-            performance.now();
-
-
-        cycleNumber++;
-
-
-        /*
-            Calculate actual wall-clock time between
-            the starts/restarts of audio cycles.
-        */
-
-        let cycleInterval =
-            null;
-
-
-        if (
-            lastCyclePerformance !== null
-        ) {
-
-            cycleInterval =
-                (
-                    now -
-                    lastCyclePerformance
-                ) / 1000;
-
-        }
-
-
-        lastCyclePerformance =
-            now;
-
-
-        cycleStartTimes.push(
-            now
-        );
-
-
-        /*
-            Diagnostic log.
-        */
-
-        if (
-            cycleInterval !== null
-        ) {
-
-            logEvent(
-                "AUDIO ENDED / RESTART #" +
-                cycleNumber +
-                " — actual cycle interval = " +
-                cycleInterval.toFixed(6) +
-                " s"
-            );
-
-        }
-
-        else {
-
-            logEvent(
-                "AUDIO ENDED / RESTART #" +
-                cycleNumber
-            );
-
-        }
-
-
-        updateDiagnostics();
-
-
-        /*
-        ====================================================
-        RESTART AUDIO
-        ====================================================
-        */
-
-
-        audio.currentTime = 0;
-
-
-        try {
-
-            await audio.play();
-
-        }
-
-        catch (error) {
-
-            logEvent(
-                "RESTART FAILED: " +
-                error
-            );
-
-
-            status.textContent =
-                "Audio restart failed:\n" +
-                error;
-
-            running = false;
-
-            return;
-
-        }
-
-
-        /*
-            Record the restart as accurately as possible.
-        */
-
-        const restartNow =
-            performance.now();
-
-
-        /*
-            If the play() promise itself takes significant
-            time, record it in the log.
-        */
-
-        const restartDelay =
-            (
-                restartNow -
-                now
-            ) / 1000;
-
-
-        if (
-            restartDelay > 0.01
-        ) {
-
-            logEvent(
-                "Restart delay after ENDED = " +
-                restartDelay.toFixed(6) +
-                " s"
-            );
-
-        }
-
-
-        updateDiagnostics();
-
-    }
-);
-
-
-/*
-============================================================
-ERROR
-============================================================
-*/
-
-
-audio.addEventListener(
-    "error",
-    () => {
-
-        logEvent(
-            "AUDIO ERROR"
-        );
-
-
-        if (
-            audio.error
-        ) {
-
-            logEvent(
-                "MediaError code = " +
-                audio.error.code
-            );
-
-        }
-
-
-        status.textContent =
-            "Audio error.";
-
-    }
-);
-
-
-/*
-============================================================
-START
-============================================================
-*/
-
+/* ============================================================
+   START
+   ============================================================ */
 
 async function startAlarm() {
 
+    if (!audio.src) {
 
-    if (running) {
-        return;
+        generateAudio();
     }
 
 
-    const seconds =
-        Number(
-            intervalInput.value
-        );
-
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds < MIN_INTERVAL ||
-        seconds > MAX_INTERVAL
-    ) {
-
-        status.textContent =
-            "Enter an interval from " +
-            MIN_INTERVAL +
-            " to " +
-            MAX_INTERVAL +
-            " seconds.";
-
-        return;
-
-    }
-
-
-    requestedInterval =
-        seconds;
-
-
     /*
-        Clear old log.
+       Safari requires a user gesture for
+       starting media. This function is called
+       directly by the Start button.
     */
-
-    logElement.textContent =
-        "";
-
-
-    /*
-        Generate WAV.
-    */
-
-    status.textContent =
-        "Generating audio track...";
-
-
-    const wavInfo =
-        createIntervalWav(
-            seconds
-        );
-
-
-    /*
-        Make the information globally available
-        to the diagnostic display.
-    */
-
-    window.wavInfo =
-        wavInfo;
-
-
-    /*
-        Load audio.
-    */
-
-    audio.src =
-        wavInfo.url;
-
-
-    /*
-        VERY IMPORTANT:
-
-        Do NOT use audio.loop.
-
-        We want the "ended" event so we can measure
-        exactly when Safari reaches the end.
-    */
-
-    audio.loop = false;
-
-
-    audio.volume = 1.0;
-
-
-    /*
-        Reset counters.
-    */
-
-    cycleNumber = 0;
-
-    cycleStartTimes = [];
-
-
-    /*
-        Start high-resolution diagnostic clock.
-    */
-
-    testStartPerformance =
-        performance.now();
-
-
-    lastCyclePerformance =
-        testStartPerformance;
-
-
-    /*
-        The first audio cycle starts HERE.
-
-        The actual acoustic sound may be delayed slightly
-        by the hardware/audio pipeline, but this gives us
-        the browser-side reference.
-    */
-
-    cycleStartTimes.push(
-        testStartPerformance
-    );
-
-
-    /*
-        Update diagnostics before playback.
-    */
-
-    updateDiagnostics();
-
-
-    /*
-    ========================================================
-    USER GESTURE → AUDIO PLAYBACK
-    ========================================================
-    */
-
 
     try {
 
+        audio.currentTime = 0;
+
         await audio.play();
 
-    }
 
+        startPerformanceTime =
+            performance.now();
+
+
+        status.textContent =
+            "RUNNING";
+
+
+        log("");
+        log("================================");
+        log("START");
+        log(
+            "Interval = " +
+            currentInterval.toFixed(3) +
+            " s"
+        );
+
+        log(
+            "audio.duration = " +
+            (
+                Number.isFinite(audio.duration)
+                    ? audio.duration.toFixed(6)
+                    : "unknown"
+            ) +
+            " s"
+        );
+
+        log(
+            "Native looping = " +
+            audio.loop
+        );
+
+
+        updateTimer();
+
+    }
     catch (error) {
 
         status.textContent =
-            "Safari blocked audio playback.\n\n" +
-            String(error);
+            "Unable to start audio";
 
-        logEvent(
-            "INITIAL PLAY FAILED: " +
-            String(error)
+        log(
+            "PLAY ERROR: " +
+            error
         );
-
-        return;
-
     }
-
-
-    running = true;
-
-
-    intervalInput.disabled =
-        true;
-
-
-    status.textContent =
-        "RUNNING\n\n" +
-        "Audio engine is the alarm clock.";
-
-
-    logEvent(
-        "START — requested interval = " +
-        seconds.toFixed(6) +
-        " s"
-    );
-
-
-    logEvent(
-        "WAV nominal duration = " +
-        wavInfo.nominalDuration.toFixed(6) +
-        " s"
-    );
-
-
-    /*
-        Visual diagnostics update frequently.
-
-        Again, this timer does NOT control the alarm.
-    */
-
-    countdownTimer =
-        setInterval(
-            updateCountdown,
-            50
-        );
-
-
-    updateDiagnostics();
-
 }
 
 
-/*
-============================================================
-STOP
-============================================================
-*/
-
+/* ============================================================
+   STOP
+   ============================================================ */
 
 function stopAlarm() {
 
-
-    running = false;
-
-
-    if (
-        countdownTimer !== null
-    ) {
-
-        clearInterval(
-            countdownTimer
-        );
-
-        countdownTimer = null;
-
-    }
-
-
     audio.pause();
-
 
     audio.currentTime = 0;
 
 
-    intervalInput.disabled =
-        false;
+    if (timerAnimationFrame !== null) {
+
+        cancelAnimationFrame(
+            timerAnimationFrame
+        );
+
+        timerAnimationFrame = null;
+    }
 
 
-    countdown.textContent =
-        "--";
+    timer.textContent =
+        "0.0";
 
 
     status.textContent =
         "Stopped";
 
 
-    logEvent(
-        "STOP"
-    );
-
-
-    updateDiagnostics();
-
+    log("");
+    log("STOP");
 }
 
 
+/* ============================================================
+   SCREEN TIMER
+   ============================================================ */
+
 /*
-============================================================
-BUTTONS
-============================================================
+   IMPORTANT:
+
+   This timer is informational only.
+
+   It does NOT control the audio.
+
+   The native audio track is the timing mechanism.
 */
+
+function updateTimer() {
+
+    if (audio.paused) {
+        return;
+    }
+
+
+    /*
+       audio.currentTime is the important
+       value here because it represents the
+       native media clock.
+    */
+
+    const mediaTime =
+        audio.currentTime;
+
+
+    /*
+       Show time remaining until the next
+       expected normal blip.
+
+       We calculate relative to the beginning
+       of the 60-second active window.
+    */
+
+    let nextBlip;
+
+    if (mediaTime < currentInterval) {
+
+        nextBlip =
+            currentInterval;
+    }
+    else {
+
+        const intervalsPassed =
+            Math.ceil(
+                mediaTime /
+                currentInterval
+            );
+
+        nextBlip =
+            intervalsPassed *
+            currentInterval;
+    }
+
+
+    /*
+       Once we're past 60 seconds, the next
+       important event is the loop marker.
+    */
+
+    if (mediaTime >= ACTIVE_SECONDS) {
+
+        timer.textContent =
+            "LOOP";
+
+    }
+    else {
+
+        const remaining =
+            Math.max(
+                0,
+                nextBlip - mediaTime
+            );
+
+
+        timer.textContent =
+            remaining.toFixed(2);
+    }
+
+
+    timerAnimationFrame =
+        requestAnimationFrame(
+            updateTimer
+        );
+}
+
+
+/* ============================================================
+   AUDIO EVENTS
+   ============================================================ */
+
+audio.addEventListener(
+    "play",
+    function() {
+
+        log(
+            "audio PLAY event"
+        );
+    }
+);
+
+
+audio.addEventListener(
+    "playing",
+    function() {
+
+        log(
+            "audio PLAYING event"
+        );
+    }
+);
+
+
+audio.addEventListener(
+    "pause",
+    function() {
+
+        log(
+            "audio PAUSE event"
+        );
+    }
+);
+
+
+audio.addEventListener(
+    "waiting",
+    function() {
+
+        log(
+            "audio WAITING event at currentTime=" +
+            audio.currentTime.toFixed(6)
+        );
+    }
+);
+
+
+audio.addEventListener(
+    "timeupdate",
+    function() {
+
+        /*
+           Intentionally not logging every event,
+           because Safari can generate many of them.
+        */
+    }
+);
+
+
+/*
+   With loop=true, we should NOT normally receive
+   an ended event at every 70-second boundary.
+
+   If Safari ever does emit one, log it.
+*/
+
+audio.addEventListener(
+    "ended",
+    function() {
+
+        log(
+            "UNEXPECTED ENDED event at currentTime=" +
+            audio.currentTime.toFixed(6)
+        );
+    }
+);
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+generateButton.addEventListener(
+    "click",
+    generateAudio
+);
 
 
 startButton.addEventListener(
@@ -1625,8 +1250,13 @@ stopButton.addEventListener(
 );
 
 
+/* ============================================================
+   INITIAL GENERATION
+   ============================================================ */
+
+generateAudio();
+
 </script>
 
 </body>
-
 </html>
