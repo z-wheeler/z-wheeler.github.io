@@ -63,7 +63,24 @@
         </iframe>
 
     </div>
-
+    <button onclick="checkAudioSession()">Check Audio Session</button>
+    <p id="audioSessionResult">Not checked yet.</p>
+    
+    <script>
+    function checkAudioSession() {
+        const result = document.getElementById("audioSessionResult");
+    
+        if (!("audioSession" in navigator)) {
+            result.textContent =
+                "navigator.audioSession is NOT available in this Safari.";
+            return;
+        }
+    
+        result.textContent =
+            "navigator.audioSession IS available. Type: " +
+            navigator.audioSession.type;
+    }
+    </script>
 </div>
 
 </body>
