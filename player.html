@@ -47,61 +47,13 @@
     </p>
 
     <div class="player">
-
-        <script>
-            // Tell iOS Safari that this page is intended for media playback.
-            if ("audioSession" in navigator) {
-                navigator.audioSession.type = "playback";
-            }
-        
-            // ------------------------------------------------------------
-            // Native audio test
-            // ------------------------------------------------------------
-        
-            const keepAlive = document.getElementById("keepAlive");
-            const testButton = document.getElementById("testButton");
-        
-            // 100 ms, 8 kHz, mono WAV containing a short 440 Hz tone.
-            // It will be looped continuously.
-            keepAlive.src =
-                "data:audio/wav;base64," +
-                "UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAGAAAAAP0MahjtIIclsCVlISsZ/g0xAUn0yugR4CPbk9pu3j7mE/Gl/XUKARbsHiskISWzIU0a0Q99A8n2M+sa4o/cNts33jPlVe9o+/0HmRPcHLEiaSTTIUEbexGrBTj5m+0x5BbeAdwt3lfkwO1L+ZgFNBHAGh0hjCPHIQcc+xK3B5P7/O9S5rbf8NxP3qjjVuxQ90gD1g6bGHEfjCKQIZ8cUBSgCdf9VvJ66GzhAN6a3ibjFut59REBggxxFrIdbCExIQsdehVlCwAAo/Sl6jXjMN8O39DiAerG8/b+OwpEFOEbLiCqIEsdeRYFDQ4C4vbR7Azle+Cn36XiGOk68vb8BQgaEgQa1h7/H2EdTRd9Dv4DD/n67u/m4OFj4KPiWejV8BX74QX0DxwYZh0yH08d9xfOD88FKfsc8droWuNA4cnixOeY71X50wPWDS4W4htGHhUddhj4EH8HK/0188rq5+Q74hbjWeeD7rb33AHCCz0UTRo9HbYczRj5EQwJFf9C9bzsg+ZS44bjF+eV7Tv2AAC9CUsSqhgZHDUc/BjSEnUK5ABA963uLOiB5Bnk/ObQ7OP0P/7HB10Q/BbfGpIbBBmDE7sLlgIt+Znw3unG5cvkBucz7LHznPzlBXQORhWQGdEa5xgNFNsMKgQF+37yluse55rlNee866PyF/sXBJQMjBMwGPQZphhxFNYNnwXH/Fj0Ue2G6ITmh+ds67vxs/lhAr8K0RHBFv0YRBiuFKsO8wZx/ib2DO/66Ybn+edB6/jwcPjEAPkIFxBIFfAXwxfHFFsPJQgAAOT3xPB4657oieg561rwT/dD/0QHYg7GE88WJBe9FOcPNQlzAZD5dvL87MjpNelU6+HvUfbe/aIFtQxAEp4VaxaSFE4QIQrKAif7H/SF7gHr++mQ64zvdfWW/BUEEQu3EF4UmRVGFJEQ6woCBKn8vPUN8Efs2Orr61rvvfRt+58CegkvDxITsRTdE7IQkgsbBRP+TPeU8Zbtyuti7ErvJ/Rk+kIB8gerDb8RthNYE7IQFwwUBmP/y/gV8+3uzez07FrvtPN7+QAAfAYtDGYQqxK5EpIQeQztBpYAOPqP9Efw4O2f7YnvY/Oz+Nr+GgW4CgsPkhEDElQQugykB68BkPv+9aLx/u5g7tbvMvMM+ND9zQNPCbANbxA5EfoP2gw7CKoC0fxh9/zyJ/A07z7wIvOG9+T8lwL0B1kMQw9cEIUP2wyxCIcD+/20+FH0VfEZ8L/wMPMg9xb8egGpBgcLEg5vD/gOvgwHCUUEC//2+Z71iPIN8VfxXPPa9mf7dwBxBb4J3gx1DlUOhAw9CeQEAAAk++L2u/MM8gTyo/O09tj6kP9NBIAIqwtxDZ4NMAxUCWUF2QA9/Br47fQU88TyBPSr9mf6xf4/A08HfApmDNYMwgtOCcYFlgFA/UP5GvYi9JTzffTA9hX6Fv5IAi4GUQlVC/8LPgssCQgGNgIq/lz6Qfc09XH0DPXw9uH5hf1rAR4FMAhDCh0LpQruCC0GuAL6/mL7XvhG9ln1rvU798z5Ev2oACIEGAcxCTAK+gmXCDUGHQOw/1T8bvlW90n2Yvad99L5vPwAADwDDgYjCD0JPgkoCCAGZANJAC/9cfpi+D73JfcX+PX5g/x0/2wCFAUbB0YIdQikB/AFjgPIAPP9Y/tn+Tb49Pel+DL6aPwE/7QBKgQbBk0HoAcNB6cFmwMpAZ7+Q/xh+i/5zfhG+Yf6afyw/hYBVAMmBVYGwwZkBkUFjANvAS//D/1Q+yX6rvn3+fT6hvx5/pIAkwI+BGIF4AWrBc0EYgOXAaX/xv0x/BX7k/q1+nf7vfxf/ioA6AFlA3UE+gTnBEEEHgOkAQAAZP4B/f/7evuA+wz8Df1g/t3/VQGeApADEwQYBKIDwgKVAT8A6/6//d78YPxT/LT8df19/qz/3ADqAbcCLgNBA/MCTwJqAWIAWP9o/rD9Q/0s/Wr98/21/pf/fABLAewBTQJmAjYCxgElAWkAqv/8/nT+If4J/i3+hv4G/53/NwDDADABdAGIAW0BKgHIAFUA4f94/yf/9v7n/vv+K/9w/7//DQBSAIYApACqAJsAfABSACUA/f/c/8j/wP/E/9D/4f/x//z/";
-        
-            keepAlive.loop = true;
-        
-            testButton.addEventListener("click", async () => {
-                try {
-                    // Explicitly establish the Safari media session.
-                    if ("audioSession" in navigator) {
-                        navigator.audioSession.type = "playback";
-                    }
-        
-                    // Start the native audio.
-                    await keepAlive.play();
-        
-                    // Start the YouTube iframe.
-                    const iframe = document.getElementById("youtube");
-                    iframe.contentWindow.postMessage(
-                        JSON.stringify({
-                            event: "command",
-                            func: "playVideo",
-                            args: []
-                        }),
-                        "https://www.youtube-nocookie.com"
-                    );
-        
-                    testButton.textContent = "Playing — now lock the phone";
-                } catch (error) {
-                    testButton.textContent = "Error: " + error;
-                    console.error(error);
-                }
-            });
-        </script>
+    
         <button id="testButton">
             Start Background Audio Test
         </button>
-
+    
         <audio id="keepAlive" playsinline></audio>
+    
         <iframe
             id="youtube"
             src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE?playsinline=1&enablejsapi=1"
@@ -110,7 +62,50 @@
             allow="autoplay; encrypted-media; picture-in-picture"
             allowfullscreen>
         </iframe>
-
+    
+        <script>
+            // Tell iOS Safari that this page is intended for media playback.
+            if ("audioSession" in navigator) {
+                navigator.audioSession.type = "playback";
+            }
+    
+            const keepAlive = document.getElementById("keepAlive");
+            const testButton = document.getElementById("testButton");
+    
+            keepAlive.src =
+                "data:audio/wav;base64," +
+                "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";
+    
+            keepAlive.loop = true;
+    
+            testButton.addEventListener("click", async () => {
+                try {
+                    if ("audioSession" in navigator) {
+                        navigator.audioSession.type = "playback";
+                    }
+    
+                    await keepAlive.play();
+    
+                    const iframe = document.getElementById("youtube");
+    
+                    iframe.contentWindow.postMessage(
+                        JSON.stringify({
+                            event: "command",
+                            func: "playVideo",
+                            args: []
+                        }),
+                        "https://www.youtube-nocookie.com"
+                    );
+    
+                    testButton.textContent = "Playing — now lock the phone";
+    
+                } catch (error) {
+                    testButton.textContent = "Error: " + error;
+                    console.error(error);
+                }
+            });
+        </script>
+    
     </div>
     <button onclick="checkAudioSession()">Check Audio Session</button>
     <p id="audioSessionResult">Not checked yet.</p>
