@@ -6,6 +6,12 @@
 
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
+    <script>
+        if ("audioSession" in navigator) {
+            navigator.audioSession.type = "playback";
+        }
+    </script>
+
     <title>YouTube Background Playback Test</title>
 
     <style>
