@@ -9,257 +9,710 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>YouTube Video Player</title>
+    <title>YouTube Player</title>
 
     <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f5f5f5;
+            margin: 0;
+            background: #0f0f0f;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-        h1 {
-            margin-bottom: 10px;
-        }
+        /* ---------------------------------------------
+           Main page container
+        --------------------------------------------- */
 
-        #status {
-            margin-bottom: 15px;
-        }
-
-        #videoList {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .videoButton {
-            padding: 10px 14px;
-            border: 1px solid #999;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-        }
-
-        .videoButton:hover {
-            background: #eee;
-        }
-
-        .videoButton.active {
-            background: #ddd;
-            font-weight: bold;
-        }
-
-        #player {
-            display: block;
+        #page {
             width: 100%;
-            max-width: 800px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+
+
+        /* ---------------------------------------------
+           Current / top video
+        --------------------------------------------- */
+
+        #currentVideoContainer {
+            width: 100%;
+        }
+
+        #currentPlayer {
+            width: 100%;
             aspect-ratio: 16 / 9;
+            display: block;
             border: none;
             background: black;
         }
 
-        #ids {
-            margin-top: 20px;
-            padding: 10px;
-            background: white;
-            border: 1px solid #ccc;
+
+        /* ---------------------------------------------
+           Controls
+        --------------------------------------------- */
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+
+            padding: 12px 0;
+        }
+
+        .controlButton {
+            border: none;
             border-radius: 6px;
+
+            background: #272727;
+            color: white;
+
+            font-size: 18px;
+
+            min-width: 70px;
+            height: 44px;
+
+            cursor: pointer;
+        }
+
+        .controlButton:hover {
+            background: #3a3a3a;
+        }
+
+        .controlButton:active {
+            background: #4a4a4a;
+        }
+
+        .controlButton:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+
+        /* ---------------------------------------------
+           Current video information
+        --------------------------------------------- */
+
+        #currentInfo {
+            padding: 4px 0 15px 0;
+        }
+
+        #currentTitle {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #currentCounter {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+
+        /* ---------------------------------------------
+           Divider
+        --------------------------------------------- */
+
+        #divider {
+            height: 1px;
+            background: #333;
+            margin-bottom: 15px;
+        }
+
+
+        /* ---------------------------------------------
+           Lower video list
+        --------------------------------------------- */
+
+        #videoList {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+
+        /* ---------------------------------------------
+           Individual lower video
+        --------------------------------------------- */
+
+        .videoCard {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .videoCard iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            border: none;
+            background: black;
+        }
+
+        .videoCardLabel {
+            padding-top: 7px;
+            color: #ddd;
+            font-size: 14px;
+        }
+
+
+        /* ---------------------------------------------
+           Empty / error messages
+        --------------------------------------------- */
+
+        #message {
+            padding: 30px 10px;
+            text-align: center;
+            color: #aaa;
+        }
+
+
+        /* ---------------------------------------------
+           Debug information
+        --------------------------------------------- */
+
+        #debug {
+            margin-top: 30px;
+            padding: 12px;
+
+            background: #181818;
+            border: 1px solid #333;
+
+            color: #888;
+
+            font-family: monospace;
+            font-size: 12px;
+
             white-space: pre-wrap;
             word-break: break-all;
         }
+
     </style>
+
 </head>
+
 
 <body>
 
-    <h1>YouTube Player</h1>
+<div id="page">
 
-    <p id="status">Reading video IDs...</p>
+
+    <!-- =============================================
+         CURRENT VIDEO
+    ============================================== -->
+
+    <div id="currentVideoContainer">
+
+        <iframe
+            id="currentPlayer"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+
+    </div>
+
+
+    <!-- =============================================
+         CONTROLS
+    ============================================== -->
+
+    <div id="controls">
+
+        <button
+            id="backButton"
+            class="controlButton">
+            ◀
+        </button>
+
+        <button
+            id="playPauseButton"
+            class="controlButton">
+            ▶
+        </button>
+
+        <button
+            id="forwardButton"
+            class="controlButton">
+            ▶
+        </button>
+
+    </div>
+
+
+    <!-- =============================================
+         CURRENT VIDEO INFORMATION
+    ============================================== -->
+
+    <div id="currentInfo">
+
+        <div id="currentTitle">
+            Video
+        </div>
+
+        <div id="currentCounter">
+            1 / 1
+        </div>
+
+    </div>
+
+
+    <div id="divider"></div>
+
+
+    <!-- =============================================
+         LOWER VIDEO LIST
+    ============================================== -->
 
     <div id="videoList"></div>
 
-    <iframe
-        id="player"
-        allow="autoplay; encrypted-media; picture-in-picture"
-        allowfullscreen>
-    </iframe>
 
-    <div id="ids"></div>
+    <!-- =============================================
+         ERROR / STATUS MESSAGE
+    ============================================== -->
+
+    <div id="message"></div>
 
 
-    <script>
+    <!-- =============================================
+         DEBUG INFORMATION
+    ============================================== -->
 
-        // --------------------------------------------------
-        // Get the "videos" parameter from the URL
-        //
-        // Example:
-        //
-        // ?videos=dQw4w9WgXcQ,abc12345678,xyz98765432
-        // --------------------------------------------------
+    <div id="debug"></div>
 
-        const params = new URLSearchParams(
+
+</div>
+
+
+<script>
+
+    // =================================================
+    // READ VIDEO IDS FROM URL
+    //
+    // Example:
+    //
+    // ?videos=dQw4w9WgXcQ,abc12345678,xyz98765432
+    // =================================================
+
+    const params =
+        new URLSearchParams(
             window.location.search
         );
 
-        const videosParameter = params.get("videos");
+    const videosParameter =
+        params.get("videos");
 
 
-        // --------------------------------------------------
-        // Get references to page elements
-        // --------------------------------------------------
+    // =================================================
+    // PAGE ELEMENTS
+    // =================================================
 
-        const status = document.getElementById("status");
-        const videoList = document.getElementById("videoList");
-        const player = document.getElementById("player");
-        const idsDisplay = document.getElementById("ids");
+    const currentPlayer =
+        document.getElementById(
+            "currentPlayer"
+        );
+
+    const videoList =
+        document.getElementById(
+            "videoList"
+        );
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+    const currentTitle =
+        document.getElementById(
+            "currentTitle"
+        );
+
+    const currentCounter =
+        document.getElementById(
+            "currentCounter"
+        );
+
+    const backButton =
+        document.getElementById(
+            "backButton"
+        );
+
+    const forwardButton =
+        document.getElementById(
+            "forwardButton"
+        );
+
+    const playPauseButton =
+        document.getElementById(
+            "playPauseButton"
+        );
+
+    const debug =
+        document.getElementById(
+            "debug"
+        );
 
 
-        // --------------------------------------------------
-        // Make sure we actually received something
-        // --------------------------------------------------
+    // =================================================
+    // BASIC VALIDATION
+    // =================================================
 
-        if (!videosParameter) {
+    if (!videosParameter) {
 
-            status.textContent =
-                "No video IDs were supplied.";
+        message.textContent =
+            "No YouTube video IDs were supplied.";
+
+    } else {
+
+
+        // =============================================
+        // SPLIT THE VIDEO LIST
+        // =============================================
+
+        const rawIds =
+            videosParameter.split(",");
+
+
+        // =============================================
+        // VALIDATE VIDEO IDS
+        // =============================================
+
+        let videoIds =
+            rawIds
+                .map(
+                    id => id.trim()
+                )
+                .filter(
+                    id =>
+                        /^[A-Za-z0-9_-]{11}$/.test(id)
+                );
+
+
+        // =============================================
+        // REMOVE DUPLICATES
+        // =============================================
+
+        videoIds =
+            [...new Set(videoIds)];
+
+
+        // =============================================
+        // DEBUG DISPLAY
+        // =============================================
+
+        debug.textContent =
+            "Received video IDs:\n\n" +
+            videoIds.join("\n");
+
+
+        // =============================================
+        // MAKE SURE WE HAVE VIDEOS
+        // =============================================
+
+        if (videoIds.length === 0) {
+
+            message.textContent =
+                "No valid YouTube video IDs were found.";
 
         } else {
 
-            // --------------------------------------------------
-            // Split the comma-separated list
-            // --------------------------------------------------
 
-            const rawIds = videosParameter.split(",");
+            // =========================================
+            // CURRENT VIDEO INDEX
+            // =========================================
+
+            let currentIndex = 0;
 
 
-            // --------------------------------------------------
-            // Validate each ID
+            // =========================================
+            // PLAY STATE
             //
-            // Standard YouTube video IDs are 11 characters
-            // consisting of A-Z, a-z, 0-9, _ and -
-            // --------------------------------------------------
+            // NOTE:
+            // The iframe itself does not expose a
+            // reliable play/pause interface unless we
+            // use the YouTube IFrame Player API.
+            //
+            // For now this variable tracks what the
+            // button is requesting.
+            // =========================================
 
-            const videoIds = rawIds
-                .map(id => id.trim())
-                .filter(id => /^[A-Za-z0-9_-]{11}$/.test(id));
-
-
-            // --------------------------------------------------
-            // Remove duplicates
-            // --------------------------------------------------
-
-            const uniqueVideoIds = [
-                ...new Set(videoIds)
-            ];
+            let isPlaying = true;
 
 
-            // --------------------------------------------------
-            // Display the IDs
-            // --------------------------------------------------
+            // =========================================
+            // LOAD CURRENT VIDEO
+            // =========================================
 
-            idsDisplay.textContent =
-                "Video IDs received:\n\n" +
-                uniqueVideoIds.join("\n");
+            function loadCurrentVideo() {
 
-
-            // --------------------------------------------------
-            // Make sure at least one valid ID exists
-            // --------------------------------------------------
-
-            if (uniqueVideoIds.length === 0) {
-
-                status.textContent =
-                    "No valid YouTube video IDs were found.";
-
-            } else {
-
-                status.textContent =
-                    uniqueVideoIds.length +
-                    " video ID(s) received.";
+                const id =
+                    videoIds[currentIndex];
 
 
-                // --------------------------------------------------
-                // Function to load a video
-                // --------------------------------------------------
+                // -------------------------------------
+                // Load the selected video
+                // -------------------------------------
 
-                function loadVideo(videoId, button) {
-
-                    player.src =
-                        "https://www.youtube.com/embed/" +
-                        encodeURIComponent(videoId) +
-                        "?autoplay=1";
+                currentPlayer.src =
+                    "https://www.youtube.com/embed/" +
+                    encodeURIComponent(id) +
+                    "?autoplay=1";
 
 
-                    // Remove active state from all buttons
+                // -------------------------------------
+                // Update information
+                // -------------------------------------
 
-                    document
-                        .querySelectorAll(".videoButton")
-                        .forEach(btn => {
-                            btn.classList.remove("active");
-                        });
-
-
-                    // Mark selected button active
-
-                    if (button) {
-                        button.classList.add("active");
-                    }
+                currentTitle.textContent =
+                    "YouTube Video " +
+                    (currentIndex + 1);
 
 
-                    status.textContent =
-                        "Playing: " + videoId;
-                }
+                currentCounter.textContent =
+                    (currentIndex + 1) +
+                    " / " +
+                    videoIds.length;
 
 
-                // --------------------------------------------------
-                // Create a button for every video
-                // --------------------------------------------------
+                // -------------------------------------
+                // Update button states
+                // -------------------------------------
 
-                uniqueVideoIds.forEach(
-                    (videoId, index) => {
+                backButton.disabled =
+                    currentIndex === 0;
 
-                        const button =
-                            document.createElement("button");
+                forwardButton.disabled =
+                    currentIndex ===
+                    videoIds.length - 1;
 
-                        button.className =
-                            "videoButton";
 
-                        button.textContent =
-                            "Video " + (index + 1);
+                // -------------------------------------
+                // Rebuild lower video list
+                // -------------------------------------
 
-                        button.addEventListener(
+                buildVideoList();
+
+
+                // -------------------------------------
+                // Reset play state
+                // -------------------------------------
+
+                isPlaying = true;
+
+                playPauseButton.textContent =
+                    "❚❚";
+            }
+
+
+            // =========================================
+            // BUILD LOWER VIDEO LIST
+            // =========================================
+
+            function buildVideoList() {
+
+                videoList.innerHTML = "";
+
+
+                videoIds.forEach(
+                    (id, index) => {
+
+                        // Don't display the currently
+                        // selected video again below.
+
+                        if (
+                            index === currentIndex
+                        ) {
+                            return;
+                        }
+
+
+                        // ---------------------------------
+                        // Card
+                        // ---------------------------------
+
+                        const card =
+                            document.createElement(
+                                "div"
+                            );
+
+                        card.className =
+                            "videoCard";
+
+
+                        // ---------------------------------
+                        // Iframe
+                        // ---------------------------------
+
+                        const iframe =
+                            document.createElement(
+                                "iframe"
+                            );
+
+
+                        iframe.src =
+                            "https://www.youtube.com/embed/" +
+                            encodeURIComponent(id);
+
+
+                        iframe.allow =
+                            "autoplay; encrypted-media; picture-in-picture";
+
+
+                        iframe.allowFullscreen =
+                            true;
+
+
+                        // ---------------------------------
+                        // Label
+                        // ---------------------------------
+
+                        const label =
+                            document.createElement(
+                                "div"
+                            );
+
+                        label.className =
+                            "videoCardLabel";
+
+
+                        label.textContent =
+                            "Video " +
+                            (index + 1);
+
+
+                        // ---------------------------------
+                        // Clicking a lower video makes
+                        // it the current video.
+                        // ---------------------------------
+
+                        card.addEventListener(
                             "click",
-                            () => {
-                                loadVideo(
-                                    videoId,
-                                    button
-                                );
+                            function () {
+
+                                currentIndex =
+                                    index;
+
+                                loadCurrentVideo();
                             }
                         );
 
-                        videoList.appendChild(button);
+
+                        // ---------------------------------
+                        // Assemble card
+                        // ---------------------------------
+
+                        card.appendChild(
+                            iframe
+                        );
+
+                        card.appendChild(
+                            label
+                        );
+
+                        videoList.appendChild(
+                            card
+                        );
+
                     }
                 );
-
-
-                // --------------------------------------------------
-                // Automatically load the first video
-                // --------------------------------------------------
-
-                const firstButton =
-                    videoList.querySelector(
-                        ".videoButton"
-                    );
-
-                loadVideo(
-                    uniqueVideoIds[0],
-                    firstButton
-                );
             }
+
+
+            // =========================================
+            // BACK BUTTON
+            // =========================================
+
+            backButton.addEventListener(
+                "click",
+                function () {
+
+                    if (currentIndex > 0) {
+
+                        currentIndex--;
+
+                        loadCurrentVideo();
+                    }
+
+                }
+            );
+
+
+            // =========================================
+            // FORWARD BUTTON
+            // =========================================
+
+            forwardButton.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        currentIndex <
+                        videoIds.length - 1
+                    ) {
+
+                        currentIndex++;
+
+                        loadCurrentVideo();
+                    }
+
+                }
+            );
+
+
+            // =========================================
+            // PLAY / PAUSE BUTTON
+            //
+            // IMPORTANT:
+            //
+            // At this stage this only changes the
+            // button state. True control of the YouTube
+            // iframe requires the YouTube IFrame Player
+            // API.
+            //
+            // We'll add that next if desired.
+            // =========================================
+
+            playPauseButton.addEventListener(
+                "click",
+                function () {
+
+                    if (isPlaying) {
+
+                        playPauseButton.textContent =
+                            "▶";
+
+                        isPlaying = false;
+
+                    } else {
+
+                        playPauseButton.textContent =
+                            "❚❚";
+
+                        isPlaying = true;
+
+                    }
+
+                }
+            );
+
+
+            // =========================================
+            // INITIALIZE
+            // =========================================
+
+            message.textContent = "";
+
+            loadCurrentVideo();
+
         }
 
-    </script>
+    }
+
+</script>
 
 </body>
 
