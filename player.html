@@ -1,203 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <title>YouTube Background Playback Test</title>
+    <title>YouTube ID Player</title>
 
     <style>
         body {
-            margin: 0;
-            padding: 20px;
-            background: #111;
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: sans-serif;
+            margin: 20px;
         }
 
-        .container {
+        #player {
+            width: 100%;
             max-width: 800px;
-            margin: auto;
-        }
-
-        .player {
-            width: 100%;
             aspect-ratio: 16 / 9;
-            margin-top: 20px;
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
+            border: none;
         }
     </style>
 </head>
 
 <body>
-<button onclick="checkAudioSession()">Check Audio Session</button> <button onclick="showConsoleErrors()">Show Console Errors</button>
 
-<p id="audioSessionResult">Not checked yet.</p>
-<p id="consoleResult">No errors captured yet.</p>
+    <h1>YouTube Player</h1>
 
-<script>
-    // Capture JavaScript errors and display them on the page
-    const capturedErrors = [];
+    <p id="status">Waiting for video ID...</p>
 
-    window.addEventListener("error", function (event) {
-        capturedErrors.push(
-            "ERROR: " +
-            event.message +
-            " at " +
-            event.filename +
-            ":" +
-            event.lineno +
-            ":" +
-            event.colno
-        );
-    });
+    <iframe
+        id="player"
+        allow="autoplay; encrypted-media"
+        allowfullscreen>
+    </iframe>
 
-    // Capture rejected Promises, including audio.play() failures
-    window.addEventListener("unhandledrejection", function (event) {
-        capturedErrors.push(
-            "UNHANDLED PROMISE REJECTION: " +
-            (event.reason?.stack || event.reason || "Unknown rejection")
-        );
-    });
-
-    function checkAudioSession() {
-        const result = document.getElementById("audioSessionResult");
-
-        if (!("audioSession" in navigator)) {
-            result.textContent =
-                "navigator.audioSession is NOT available in this Safari.";
-            return;
-        }
-
-        result.textContent =
-            "navigator.audioSession IS available. Type: " +
-            navigator.audioSession.type;
-    }
-
-    function showConsoleErrors() {
-        const result = document.getElementById("consoleResult");
-
-        if (capturedErrors.length === 0) {
-            result.textContent = "No JavaScript errors have been captured.";
-        } else {
-            result.textContent = capturedErrors.join("\n\n");
-        }
-    }
-</script>
-
-<div class="container">
-
-    <h1>iOS YouTube Background Playback Test 11</h1>
-
-    <p>
-        Play the video, do NOT activate Picture-in-Picture,
-        then lock the iPhone.
-    </p>
-
-    <div class="player">
-    
-        <button id="testButton">
-            Start Background Audio Test
-        </button>
-    
-        <audio id="keepAlive" playsinline></audio>
-    
-        <iframe
-            id="youtube"
-            src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE?playsinline=1&enablejsapi=1"
-            title="YouTube video player"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowfullscreen>
-        </iframe>
-    
-        <script>
-            // Tell iOS Safari that this page is intended for media playback.
-            if ("audioSession" in navigator) {
-                navigator.audioSession.type = "playback";
-            }
-    
-            const keepAlive = document.getElementById("keepAlive");
-            const testButton = document.getElementById("testButton");
-    
-            keepAlive.src =
-                "data:audio/wav;base64," +
-                "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";
-    
-            keepAlive.loop = true;
-    
-            testButton.addEventListener("click", async () => {
-                try {
-                    if ("audioSession" in navigator) {
-                        navigator.audioSession.type = "playback";
-                    }
-    
-                    try {
-                        await keepAlive.play();
-                    
-                        document.getElementById("audioSessionResult").textContent =
-                            "keepAlive.play() SUCCEEDED. " +
-                            "paused=" + keepAlive.paused +
-                            ", readyState=" + keepAlive.readyState +
-                            ", currentTime=" + keepAlive.currentTime;
-                    
-                    } catch (error) {
-                    
-                        document.getElementById("audioSessionResult").textContent =
-                            "keepAlive.play() FAILED: " +
-                            error.name + ": " + error.message;
-                    
-                        console.error("keepAlive.play() failed:", error);
-                    
-                        throw error;
-                    }
-    
-                    const iframe = document.getElementById("youtube");
-    
-                    iframe.contentWindow.postMessage(
-                        JSON.stringify({
-                            event: "command",
-                            func: "playVideo",
-                            args: []
-                        }),
-                        "https://www.youtube-nocookie.com"
-                    );
-    
-                    testButton.textContent = "Playing — now lock the phone";
-    
-                } catch (error) {
-                    testButton.textContent = "Error: " + error;
-                    console.error(error);
-                }
-            });
-        </script>
-    
-    </div>
-    <button onclick="checkAudioSession()">Check Audio Session</button>
-    <p id="audioSessionResult">Not checked yet.</p>
-    
     <script>
-    function checkAudioSession() {
-        const result = document.getElementById("audioSessionResult");
-    
-        if (!("audioSession" in navigator)) {
-            result.textContent =
-                "navigator.audioSession is NOT available in this Safari.";
-            return;
+        const params = new URLSearchParams(window.location.search);
+        const videoId = params.get("video");
+
+        const player = document.getElementById("player");
+        const status = document.getElementById("status");
+
+        if (videoId) {
+
+            // Basic validation: YouTube IDs are 11 characters
+            if (/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+
+                player.src =
+                    "https://www.youtube.com/embed/" +
+                    encodeURIComponent(videoId);
+
+                status.textContent =
+                    "Loaded video ID: " + videoId;
+
+            } else {
+
+                status.textContent =
+                    "Invalid YouTube video ID.";
+
+            }
+
+        } else {
+
+            status.textContent =
+                "No video ID was supplied.";
+
         }
-    
-        result.textContent =
-            "navigator.audioSession IS available. Type: " +
-            navigator.audioSession.type;
-    }
     </script>
-</div>
 
 </body>
 </html>
