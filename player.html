@@ -1,22 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>YouTube ID Player</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>YouTube Video Player</title>
 
     <style>
         body {
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
             margin: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #status {
+            margin-bottom: 15px;
+        }
+
+        #videoList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .videoButton {
+            padding: 10px 14px;
+            border: 1px solid #999;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .videoButton:hover {
+            background: #eee;
+        }
+
+        .videoButton.active {
+            background: #ddd;
+            font-weight: bold;
         }
 
         #player {
+            display: block;
             width: 100%;
             max-width: 800px;
             aspect-ratio: 16 / 9;
             border: none;
+            background: black;
+        }
+
+        #ids {
+            margin-top: 20px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -25,47 +75,192 @@
 
     <h1>YouTube Player</h1>
 
-    <p id="status">Waiting for video ID...</p>
+    <p id="status">Reading video IDs...</p>
+
+    <div id="videoList"></div>
 
     <iframe
         id="player"
-        allow="autoplay; encrypted-media"
+        allow="autoplay; encrypted-media; picture-in-picture"
         allowfullscreen>
     </iframe>
 
+    <div id="ids"></div>
+
+
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const videoId = params.get("video");
 
-        const player = document.getElementById("player");
+        // --------------------------------------------------
+        // Get the "videos" parameter from the URL
+        //
+        // Example:
+        //
+        // ?videos=dQw4w9WgXcQ,abc12345678,xyz98765432
+        // --------------------------------------------------
+
+        const params = new URLSearchParams(
+            window.location.search
+        );
+
+        const videosParameter = params.get("videos");
+
+
+        // --------------------------------------------------
+        // Get references to page elements
+        // --------------------------------------------------
+
         const status = document.getElementById("status");
+        const videoList = document.getElementById("videoList");
+        const player = document.getElementById("player");
+        const idsDisplay = document.getElementById("ids");
 
-        if (videoId) {
 
-            // Basic validation: YouTube IDs are 11 characters
-            if (/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+        // --------------------------------------------------
+        // Make sure we actually received something
+        // --------------------------------------------------
 
-                player.src =
-                    "https://www.youtube.com/embed/" +
-                    encodeURIComponent(videoId);
+        if (!videosParameter) {
+
+            status.textContent =
+                "No video IDs were supplied.";
+
+        } else {
+
+            // --------------------------------------------------
+            // Split the comma-separated list
+            // --------------------------------------------------
+
+            const rawIds = videosParameter.split(",");
+
+
+            // --------------------------------------------------
+            // Validate each ID
+            //
+            // Standard YouTube video IDs are 11 characters
+            // consisting of A-Z, a-z, 0-9, _ and -
+            // --------------------------------------------------
+
+            const videoIds = rawIds
+                .map(id => id.trim())
+                .filter(id => /^[A-Za-z0-9_-]{11}$/.test(id));
+
+
+            // --------------------------------------------------
+            // Remove duplicates
+            // --------------------------------------------------
+
+            const uniqueVideoIds = [
+                ...new Set(videoIds)
+            ];
+
+
+            // --------------------------------------------------
+            // Display the IDs
+            // --------------------------------------------------
+
+            idsDisplay.textContent =
+                "Video IDs received:\n\n" +
+                uniqueVideoIds.join("\n");
+
+
+            // --------------------------------------------------
+            // Make sure at least one valid ID exists
+            // --------------------------------------------------
+
+            if (uniqueVideoIds.length === 0) {
 
                 status.textContent =
-                    "Loaded video ID: " + videoId;
+                    "No valid YouTube video IDs were found.";
 
             } else {
 
                 status.textContent =
-                    "Invalid YouTube video ID.";
+                    uniqueVideoIds.length +
+                    " video ID(s) received.";
 
+
+                // --------------------------------------------------
+                // Function to load a video
+                // --------------------------------------------------
+
+                function loadVideo(videoId, button) {
+
+                    player.src =
+                        "https://www.youtube.com/embed/" +
+                        encodeURIComponent(videoId) +
+                        "?autoplay=1";
+
+
+                    // Remove active state from all buttons
+
+                    document
+                        .querySelectorAll(".videoButton")
+                        .forEach(btn => {
+                            btn.classList.remove("active");
+                        });
+
+
+                    // Mark selected button active
+
+                    if (button) {
+                        button.classList.add("active");
+                    }
+
+
+                    status.textContent =
+                        "Playing: " + videoId;
+                }
+
+
+                // --------------------------------------------------
+                // Create a button for every video
+                // --------------------------------------------------
+
+                uniqueVideoIds.forEach(
+                    (videoId, index) => {
+
+                        const button =
+                            document.createElement("button");
+
+                        button.className =
+                            "videoButton";
+
+                        button.textContent =
+                            "Video " + (index + 1);
+
+                        button.addEventListener(
+                            "click",
+                            () => {
+                                loadVideo(
+                                    videoId,
+                                    button
+                                );
+                            }
+                        );
+
+                        videoList.appendChild(button);
+                    }
+                );
+
+
+                // --------------------------------------------------
+                // Automatically load the first video
+                // --------------------------------------------------
+
+                const firstButton =
+                    videoList.querySelector(
+                        ".videoButton"
+                    );
+
+                loadVideo(
+                    uniqueVideoIds[0],
+                    firstButton
+                );
             }
-
-        } else {
-
-            status.textContent =
-                "No video ID was supplied.";
-
         }
+
     </script>
 
 </body>
+
 </html>
