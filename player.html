@@ -94,7 +94,39 @@
             cursor: default;
         }
 
+        
+        /* ---------------------------------------------
+           Search Return Button
+        --------------------------------------------- */
 
+        #returnSearchButton {
+            display: block;
+
+            width: 100%;
+            margin: 5px 0 15px 0;
+            padding: 12px;
+
+            border: none;
+            border-radius: 6px;
+
+            background: #272727;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        #returnSearchButton:hover {
+            background: #3a3a3a;
+        }
+
+        #returnSearchButton:active {
+            background: #4a4a4a;
+        }
+
+        
         /* ---------------------------------------------
            Current video information
         --------------------------------------------- */
@@ -245,6 +277,17 @@
 
 
     <!-- =============================================
+         RETURN TO YOUTUBE SEARCH
+    ============================================== -->
+
+    <button
+        id="returnSearchButton"
+        style="display: none;">
+        ↩ Go back to search results
+    </button>
+
+    
+    <!-- =============================================
          CURRENT VIDEO INFORMATION
     ============================================== -->
 
@@ -306,7 +349,10 @@
     const videosParameter =
         params.get("videos");
 
+    const currentTabURL =
+        window.location.href;
 
+    
     // =================================================
     // PAGE ELEMENTS
     // =================================================
@@ -351,10 +397,51 @@
             "playPauseButton"
         );
 
+     const returnSearchButton =
+        document.getElementById(
+            "returnSearchButton"
+        );
+
     const debug =
         document.getElementById(
             "debug"
         );
+
+    
+    // =================================================
+    // RETURN TO SEARCH BUTTON
+    // =================================================
+    if (currentTabURL) {
+        returnSearchButton.style.display =
+            "block";
+        returnSearchButton.addEventListener(
+            "click",
+            function () {
+                /*
+                 * The URL scheme below launches the
+                 * "Return to YouTube Search" Shortcut.
+                 *
+                 * The original YouTube search URL is
+                 * passed into the Shortcut as text.
+                 */
+                const shortcutName =
+                    "Return to YouTube Search";
+                const shortcutURL =
+                    "shortcuts://run-shortcut" +
+                    "?name=" +
+                    encodeURIComponent(
+                        shortcutName
+                    ) +
+                    "&input=text" +
+                    "&text=" +
+                    encodeURIComponent(
+                        currentTabURL
+                    );
+                window.location.href =
+                    shortcutURL;
+            }
+        );
+    }
 
 
     // =================================================
@@ -406,7 +493,13 @@
 
         debug.textContent =
             "Received video IDs:\n\n" +
-            videoIds.join("\n");
+            videoIds.join("\n") +
+            "\n\n";
+        if (currentTabURL) {
+            debug.textContent +=
+                "Original search URL:\n\n" +
+                currentTabURL;
+        }
 
 
         // =============================================
